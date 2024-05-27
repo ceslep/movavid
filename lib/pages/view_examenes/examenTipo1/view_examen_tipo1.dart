@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/examen_tipo1_model.dart';
 import 'package:movavid/models/paciente.dart';

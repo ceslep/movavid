@@ -738,3 +738,25 @@ Future<DataHemat> getDataHemat(
     return DataHemat();
   }
 }
+
+Future<List<String>> getItemsExamen(
+    BuildContext context, String codexamen) async {
+  List<String> items = [];
+  final urlProvider = Provider.of<UrlProvider>(context, listen: false);
+  Uri url = Uri.parse('${urlProvider.url}getItemsExamenes.php');
+  final String bodyData = json.encode({"codexamen": codexamen});
+  try {
+    final response = await http.post(url, body: bodyData);
+    if (response.statusCode == 200) {
+      dynamic data = jsonDecode(response.body);
+      for (var element in data) {
+        items.add(element['item']);
+      }
+      print(items);
+    }
+    return items;
+  } catch (e) {
+    print(e);
+    return [];
+  }
+}

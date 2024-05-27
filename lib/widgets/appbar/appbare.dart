@@ -14,7 +14,7 @@ PreferredSizeWidget appBarExam(
   return AppBar(
     backgroundColor: backgroundColor,
     foregroundColor: frontColor,
-    title: Text(
+    title: const Text(
       'Registro de Exámenes',
       style: TextStyle(
         fontSize: 14,

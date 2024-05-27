@@ -28,6 +28,12 @@ class _ViewExamenTipo2State extends State<ViewExamenTipo2> {
   ExamenTipo2 examenS = ExamenTipo2();
   late TextEditingController valoracionController;
   late TextEditingController observacionesController;
+
+  bool examenesWithItems(String codexamen) {
+    List<String> examenes = ['0205'];
+    return examenes.contains(codexamen);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -220,8 +226,11 @@ class _ViewExamenTipo2State extends State<ViewExamenTipo2> {
                       SizedBox(
                         width: 0.2 * MediaQuery.of(context).size.width,
                         child: TextFieldI(
-                            labelText: 'Valoración',
-                            controller: valoracionController),
+                          labelText: 'Valoración',
+                          controller: valoracionController,
+                          dropdown: examenesWithItems(widget.codexamen),
+                          codexamen: widget.codexamen,
+                        ),
                       ),
                       SizedBox(
                         width: 0.2 * MediaQuery.of(context).size.width,

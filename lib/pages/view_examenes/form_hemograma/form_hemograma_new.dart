@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_print, library_private_types_in_public_api
 
 import 'package:flutter/material.dart';
-import 'package:movavid/models/data-hemat.dart';
 import 'package:movavid/models/hg_rayto.dart';
 import 'package:movavid/providers/hrayto_provider.dart';
 import 'package:provider/provider.dart';
