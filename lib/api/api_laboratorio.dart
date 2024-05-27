@@ -741,7 +741,7 @@ Future<DataHemat> getDataHemat(
 
 Future<List<String>> getItemsExamen(
     BuildContext context, String codexamen) async {
-  List<String> items = [];
+  List<String> items = ['      '];
   final urlProvider = Provider.of<UrlProvider>(context, listen: false);
   Uri url = Uri.parse('${urlProvider.url}getItemsExamenes.php');
   final String bodyData = json.encode({"codexamen": codexamen});

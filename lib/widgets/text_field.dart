@@ -26,12 +26,19 @@ class TextFieldI extends StatefulWidget {
 
 class _TextFieldIState extends State<TextFieldI> {
   List<DropDownValueModel> options = [];
+  late SingleValueDropDownController _cnt;
 
   @override
   void initState() {
     super.initState();
+    _cnt = SingleValueDropDownController();
     if (widget.dropdown!) {
-      getItemsExamen(context, widget.codexamen!).then((value) {});
+      getItemsExamen(context, widget.codexamen!).then((value) {
+        options = value.map((e) {
+          return DropDownValueModel(value: e, name: e);
+        }).toList();
+        setState(() {});
+      });
     }
   }
 
@@ -61,10 +68,11 @@ class _TextFieldIState extends State<TextFieldI> {
           )
         : options.isNotEmpty
             ? DropDownTextField(
-                controller: controller,
+                controller: _cnt,
                 clearOption: true,
                 dropDownItemCount: options.length,
                 dropDownList: options,
+                onChanged: (value) => controller.text = value.value,
               )
             : const SizedBox();
   }

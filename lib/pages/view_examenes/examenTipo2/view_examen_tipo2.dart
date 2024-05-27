@@ -224,7 +224,7 @@ class _ViewExamenTipo2State extends State<ViewExamenTipo2> {
                   Row(
                     children: [
                       SizedBox(
-                        width: 0.2 * MediaQuery.of(context).size.width,
+                        width: 0.8 * MediaQuery.of(context).size.width,
                         child: TextFieldI(
                           labelText: 'Valoración',
                           controller: valoracionController,
