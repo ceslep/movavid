@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:dropdown_textfield/dropdown_textfield.dart';
 import 'package:movavid/api/api_laboratorio.dart';
@@ -72,7 +74,11 @@ class _TextFieldIState extends State<TextFieldI> {
                 clearOption: true,
                 dropDownItemCount: options.length,
                 dropDownList: options,
-                onChanged: (value) => controller.text = value.value,
+                onChanged: (value) {
+                  if (value.value != "") {
+                    controller.text = value.value.toString();
+                  }
+                },
               )
             : const SizedBox();
   }

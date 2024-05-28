@@ -13,11 +13,14 @@ Widget buildDatePicker(
             labelText: label,
             border: const OutlineInputBorder(),
             labelStyle: const TextStyle(color: Colors.green),
-            suffixIcon: IconButton(
-              onPressed: () {
-                selectDate(context, controller);
-              },
-              icon: const Icon(Icons.date_range),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: IconButton(
+                onPressed: () {
+                  selectDate(context, controller);
+                },
+                icon: const Icon(Icons.date_range),
+              ),
             ),
           ),
         ),
