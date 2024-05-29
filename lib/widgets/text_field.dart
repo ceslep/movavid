@@ -29,19 +29,36 @@ class TextFieldI extends StatefulWidget {
 class _TextFieldIState extends State<TextFieldI> {
   List<DropDownValueModel> options = [];
   late SingleValueDropDownController _cnt;
+  FocusNode fnode = FocusNode();
 
   @override
   void initState() {
     super.initState();
-    _cnt = SingleValueDropDownController();
+    fnode.addListener(
+      () {},
+    );
     if (widget.dropdown!) {
       getItemsExamen(context, widget.codexamen!).then((value) {
         options = value.map((e) {
           return DropDownValueModel(value: e, name: e);
         }).toList();
+        print(options);
+        if (widget.controller.text != '') {
+          _cnt = SingleValueDropDownController(
+              data: DropDownValueModel(
+                  name: widget.controller.text, value: widget.controller.text));
+        } else {
+          _cnt = SingleValueDropDownController();
+        }
+
         setState(() {});
       });
     }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Widget _buildTextFieldI(
@@ -70,13 +87,20 @@ class _TextFieldIState extends State<TextFieldI> {
           )
         : options.isNotEmpty
             ? DropDownTextField(
+                textFieldFocusNode: fnode,
+                textFieldDecoration: const InputDecoration(
+                  hintText: 'Seleccione el valor',
+                ),
                 controller: _cnt,
-                clearOption: true,
-                dropDownItemCount: options.length,
                 dropDownList: options,
-                onChanged: (value) {
-                  if (value.value != "") {
-                    controller.text = value.value.toString();
+                dropDownItemCount: options.length + 1,
+                onChanged: (val) {
+                  try {
+                    print({"-->": val});
+                    controller.text = val.value.toString();
+                    setState(() {});
+                  } catch (e) {
+                    print(e);
                   }
                 },
               )

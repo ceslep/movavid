@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/examen_tipo2_model.dart';
@@ -216,6 +218,7 @@ class _ViewExamenTipo2State extends State<ViewExamenTipo2> {
               examenS.observaciones = observacionesController.text;
               examenS.identificacion = widget.paciente.identificacion;
               examenS.fecha = widget.fecha;
+              print({"valoracionF": valoracionController.text});
             },
             child: Padding(
               padding: const EdgeInsets.all(8.0),
