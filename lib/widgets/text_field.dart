@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:dropdown_textfield/dropdown_textfield.dart';
 import 'package:movavid/api/api_laboratorio.dart';
+import 'package:movavid/widgets/editable_drop_down.dart';
 
 class TextFieldI extends StatefulWidget {
   final String labelText;
@@ -28,6 +29,7 @@ class TextFieldI extends StatefulWidget {
 
 class _TextFieldIState extends State<TextFieldI> {
   List<DropDownValueModel> options = [];
+  List<String> soptions = [];
   late SingleValueDropDownController _cnt;
   FocusNode fnode = FocusNode();
 
@@ -39,6 +41,7 @@ class _TextFieldIState extends State<TextFieldI> {
     );
     if (widget.dropdown!) {
       getItemsExamen(context, widget.codexamen!).then((value) {
+        soptions = value;
         options = value.map((e) {
           return DropDownValueModel(value: e, name: e);
         }).toList();
@@ -86,7 +89,22 @@ class _TextFieldIState extends State<TextFieldI> {
             style: TextStyle(color: color),
           )
         : options.isNotEmpty
-            ? DropDownTextField(
+            ? EditableDropdown(
+                controller: widget.controller,
+                options: soptions,
+              )
+            : const SizedBox();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _buildTextFieldI(
+        widget.labelText, widget.controller, widget.colort!);
+  }
+}
+
+/* 
+DropDownTextField(
                 textFieldFocusNode: fnode,
                 textFieldDecoration: const InputDecoration(
                   hintText: 'Seleccione el valor',
@@ -103,13 +121,4 @@ class _TextFieldIState extends State<TextFieldI> {
                     print(e);
                   }
                 },
-              )
-            : const SizedBox();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return _buildTextFieldI(
-        widget.labelText, widget.controller, widget.colort!);
-  }
-}
+              ) */
