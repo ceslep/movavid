@@ -8,6 +8,7 @@ import 'package:movavid/functions/show_toast.dart';
 import 'package:movavid/models/configuracion_model.dart';
 import 'package:movavid/models/coprologico.dart';
 import 'package:movavid/models/data-hemat.dart';
+import 'package:movavid/models/examen-model.dart';
 import 'package:movavid/models/examen_tipo1_model.dart';
 import 'package:movavid/models/examen_tipo2_model.dart';
 import 'package:movavid/models/examenes.dart';
@@ -742,7 +743,7 @@ Future<DataHemat> getDataHemat(
 Future<List<String>> getItemsExamen(
     BuildContext context, String codexamen) async {
   //List<String> items = [' ' * 6];
-  List<String> items = [];
+  List<String> items = [''];
   final urlProvider = Provider.of<UrlProvider>(context, listen: false);
   Uri url = Uri.parse('${urlProvider.url}getItemsExamenes.php');
   final String bodyData = json.encode({"codexamen": codexamen});
@@ -756,6 +757,25 @@ Future<List<String>> getItemsExamen(
       print(items);
     }
     return items;
+  } catch (e) {
+    print(e);
+    return [];
+  }
+}
+
+Future<List<CodExamen>> getExamenesWithItems(BuildContext context) async {
+  //List<String> items = [' ' * 6];
+  List<Map<String, dynamic>> examenes = [];
+  final urlProvider = Provider.of<UrlProvider>(context, listen: false);
+  Uri url = Uri.parse('${urlProvider.url}getExamenesWithItems.php');
+  try {
+    final response = await http.get(url);
+    if (response.statusCode == 200) {
+      examenes = jsonDecode(response.body).cast<Map<String, dynamic>>();
+      return examenes.map((e) => CodExamen.fromJson(e)).toList();
+    } else {
+      return [];
+    }
   } catch (e) {
     print(e);
     return [];

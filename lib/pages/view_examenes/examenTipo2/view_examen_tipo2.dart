@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
+import 'package:movavid/functions/examenes.dart';
+import 'package:movavid/models/examen-model.dart';
 import 'package:movavid/models/examen_tipo2_model.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
@@ -13,12 +15,14 @@ class ViewExamenTipo2 extends StatefulWidget {
   final Paciente paciente;
   final String fecha;
   final String codexamen;
+  final List<CodExamen> exameneswi;
   const ViewExamenTipo2({
     super.key,
     required this.examen,
     required this.paciente,
     required this.fecha,
     required this.codexamen,
+    required this.exameneswi,
   });
 
   @override
@@ -30,11 +34,6 @@ class _ViewExamenTipo2State extends State<ViewExamenTipo2> {
   ExamenTipo2 examenS = ExamenTipo2();
   late TextEditingController valoracionController;
   late TextEditingController observacionesController;
-
-  bool examenesWithItems(String codexamen) {
-    List<String> examenes = ['0205'];
-    return examenes.contains(codexamen);
-  }
 
   @override
   void initState() {
@@ -227,11 +226,12 @@ class _ViewExamenTipo2State extends State<ViewExamenTipo2> {
                   Row(
                     children: [
                       SizedBox(
-                        width: 0.7 * MediaQuery.of(context).size.width,
+                        width: 0.76 * MediaQuery.of(context).size.width,
                         child: TextFieldI(
                           labelText: 'Valoración',
                           controller: valoracionController,
-                          dropdown: examenesWithItems(widget.codexamen),
+                          dropdown: examenesWithItems(
+                              widget.codexamen, widget.exameneswi),
                           codexamen: widget.codexamen,
                         ),
                       ),

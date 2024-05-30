@@ -2,6 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
+import 'package:movavid/functions/examenes.dart';
+import 'package:movavid/models/examen-model.dart';
 import 'package:movavid/models/examen_tipo1_model.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
@@ -13,12 +15,14 @@ class ViewExamenTipo1 extends StatefulWidget {
   final Paciente paciente;
   final String fecha;
   final String codexamen;
+  final List<CodExamen> exameneswi;
   const ViewExamenTipo1({
     super.key,
     required this.examen,
     required this.paciente,
     required this.fecha,
     required this.codexamen,
+    required this.exameneswi,
   });
 
   @override
@@ -228,17 +232,21 @@ class _ViewExamenTipo1State extends State<ViewExamenTipo1> {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 0.2 * MediaQuery.of(context).size.width,
+                        width: 0.76 * MediaQuery.of(context).size.width,
                         child: TextFieldI(
-                            labelText: 'Valoración',
-                            controller: valoracionController),
+                          labelText: 'Valoración',
+                          controller: valoracionController,
+                          dropdown: examenesWithItems(
+                              widget.codexamen, widget.exameneswi),
+                          codexamen: widget.codexamen,
+                        ),
                       ),
                       SizedBox(
-                        width: 0.2 * MediaQuery.of(context).size.width,
+                        width: 0.1 * MediaQuery.of(context).size.width,
                         child: Text(widget.examen.unidades!),
                       ),
                       SizedBox(
-                        width: 0.4 * MediaQuery.of(context).size.width,
+                        width: 0.1 * MediaQuery.of(context).size.width,
                         child: Text('Normal: ${widget.examen.constant!}'),
                       ),
                     ],

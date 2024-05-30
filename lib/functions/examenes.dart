@@ -6,6 +6,7 @@ import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/functions/show_toast.dart';
 import 'package:movavid/models/coprologico.dart';
 import 'package:movavid/models/data-hemat.dart';
+import 'package:movavid/models/examen-model.dart';
 import 'package:movavid/models/examen_tipo1_model.dart';
 import 'package:movavid/models/examen_tipo2_model.dart';
 import 'package:movavid/models/frotis_vaginal_model.dart';
@@ -304,8 +305,14 @@ Future<bool> coprologico2(BuildContext context, Paciente paciente, String fecha,
   return false;
 }
 
-Future<bool> examentipo_1(BuildContext context, Paciente paciente, String fecha,
-    String codexamen, String nombreExamen, FToast fToast) async {
+Future<bool> examentipo_1(
+    BuildContext context,
+    Paciente paciente,
+    String fecha,
+    String codexamen,
+    String nombreExamen,
+    List<CodExamen> exameneswi,
+    FToast fToast) async {
   ExamenTipo1 examen = await getTipo1(context,
       identificacion: paciente.identificacion!,
       fecha: fecha,
@@ -323,6 +330,7 @@ Future<bool> examentipo_1(BuildContext context, Paciente paciente, String fecha,
           fecha: fecha,
           paciente: paciente,
           codexamen: codexamen,
+          exameneswi: exameneswi,
         ),
       ),
     );
@@ -345,6 +353,7 @@ Future<bool> examentipo_1(BuildContext context, Paciente paciente, String fecha,
               constant: uniConst.constante),
           fecha: fecha,
           codexamen: codexamen,
+          exameneswi: exameneswi,
         ),
       ),
     );
@@ -365,8 +374,14 @@ Future<bool> examentipo_1(BuildContext context, Paciente paciente, String fecha,
   return false;
 }
 
-Future<bool> examentipo_2(BuildContext context, Paciente paciente, String fecha,
-    String codexamen, String nombreExamen, FToast fToast) async {
+Future<bool> examentipo_2(
+    BuildContext context,
+    Paciente paciente,
+    String fecha,
+    String codexamen,
+    String nombreExamen,
+    List<CodExamen> exameneswi,
+    FToast fToast) async {
   ExamenTipo2 examen = await getTipo2(context,
       identificacion: paciente.identificacion!,
       fecha: fecha,
@@ -384,6 +399,7 @@ Future<bool> examentipo_2(BuildContext context, Paciente paciente, String fecha,
           fecha: fecha,
           paciente: paciente,
           codexamen: codexamen,
+          exameneswi: exameneswi,
         ),
       ),
     );
@@ -406,6 +422,7 @@ Future<bool> examentipo_2(BuildContext context, Paciente paciente, String fecha,
               constant: uniConst.constante),
           fecha: fecha,
           codexamen: codexamen,
+          exameneswi: exameneswi,
         ),
       ),
     );
@@ -532,4 +549,9 @@ Future<bool> perfilLipidico(BuildContext context, Paciente paciente,
     );
   }
   return false;
+}
+
+bool examenesWithItems(String codexamen, List<CodExamen> exameneswi) {
+  return exameneswi.indexWhere((element) => element.codexamen! == codexamen) >=
+      0;
 }

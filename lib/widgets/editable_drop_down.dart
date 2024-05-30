@@ -11,15 +11,13 @@ class EditableDropdown extends StatefulWidget {
 }
 
 class _EditableDropdownState extends State<EditableDropdown> {
-  final List<String> _items = [
-    'Apple',
-    'Banana',
-    'Cherry',
-    'Date',
-    'Elderberry'
-  ];
+  late String? _selectedItem;
 
-  String? _selectedItem;
+  @override
+  void initState() {
+    super.initState();
+    _selectedItem = widget.controller.text;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +28,7 @@ class _EditableDropdownState extends State<EditableDropdown> {
         children: <Widget>[
           TextFormField(
             controller: widget.controller,
+            style: const TextStyle(fontSize: 12),
             decoration: InputDecoration(
               labelText: 'Valoración',
               suffixIcon: DropdownButton<String>(
@@ -45,7 +44,12 @@ class _EditableDropdownState extends State<EditableDropdown> {
                     .map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 8,
+                      ),
+                    ),
                   );
                 }).toList(),
               ),

@@ -30,7 +30,6 @@ class TextFieldI extends StatefulWidget {
 class _TextFieldIState extends State<TextFieldI> {
   List<DropDownValueModel> options = [];
   List<String> soptions = [];
-  late SingleValueDropDownController _cnt;
   FocusNode fnode = FocusNode();
 
   @override
@@ -42,17 +41,6 @@ class _TextFieldIState extends State<TextFieldI> {
     if (widget.dropdown!) {
       getItemsExamen(context, widget.codexamen!).then((value) {
         soptions = value;
-        options = value.map((e) {
-          return DropDownValueModel(value: e, name: e);
-        }).toList();
-        print(options);
-        if (widget.controller.text != '') {
-          _cnt = SingleValueDropDownController(
-              data: DropDownValueModel(
-                  name: widget.controller.text, value: widget.controller.text));
-        } else {
-          _cnt = SingleValueDropDownController();
-        }
 
         setState(() {});
       });
@@ -88,7 +76,7 @@ class _TextFieldIState extends State<TextFieldI> {
             ),
             style: TextStyle(color: color),
           )
-        : options.isNotEmpty
+        : soptions.isNotEmpty
             ? EditableDropdown(
                 controller: widget.controller,
                 options: soptions,

@@ -5,6 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/functions/examenes.dart';
 import 'package:movavid/functions/show_toast.dart';
+import 'package:movavid/models/examen-model.dart';
 import 'package:movavid/models/examenes.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/pages/loading.dart';
@@ -410,36 +411,39 @@ class _ConsultaExamenesState extends State<ConsultaExamenes> {
       String codexamen,
       String nombreExamen,
       final keyL) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => Loading(
-                key: keyL,
-              )),
-    );
-    if (tipo == '1') {
-      await examentipo_1(
-          context, paciente, fecha, codexamen, nombreExamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    } else if (tipo == '2') {
-      await examentipo_2(
-          context, paciente, fecha, codexamen, nombreExamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    } else if (tipo == '5') {
-      await hemogramas2(context, paciente, fecha, codexamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    } else if (tipo == '3') {
-      await parcialOrina2(context, paciente, fecha, codexamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    } else if (tipo == '4') {
-      await coprologico2(context, paciente, fecha, codexamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    } else if (tipo == '6') {
-      await frotisVaginal(context, paciente, fecha, codexamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    } else if (tipo == '8') {
-      await perfilLipidico(context, paciente, fecha, codexamen, fToast);
-      Navigator.pop(keyL.currentState!.context);
-    }
+    getExamenesWithItems(context).then((value) async {
+      List<CodExamen> exameneswi = value;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => Loading(
+                  key: keyL,
+                )),
+      );
+      if (tipo == '1') {
+        await examentipo_1(context, paciente, fecha, codexamen, nombreExamen,
+            exameneswi, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      } else if (tipo == '2') {
+        await examentipo_2(context, paciente, fecha, codexamen, nombreExamen,
+            exameneswi, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      } else if (tipo == '5') {
+        await hemogramas2(context, paciente, fecha, codexamen, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      } else if (tipo == '3') {
+        await parcialOrina2(context, paciente, fecha, codexamen, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      } else if (tipo == '4') {
+        await coprologico2(context, paciente, fecha, codexamen, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      } else if (tipo == '6') {
+        await frotisVaginal(context, paciente, fecha, codexamen, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      } else if (tipo == '8') {
+        await perfilLipidico(context, paciente, fecha, codexamen, fToast);
+        Navigator.pop(keyL.currentState!.context);
+      }
+    });
   }
 }
