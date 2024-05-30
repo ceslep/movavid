@@ -239,6 +239,7 @@ class _ViewExamenTipo1State extends State<ViewExamenTipo1> {
                           dropdown: examenesWithItems(
                               widget.codexamen, widget.exameneswi),
                           codexamen: widget.codexamen,
+                          nombreExamen: nexamen,
                         ),
                       ),
                       SizedBox(

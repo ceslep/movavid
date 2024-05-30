@@ -53,7 +53,7 @@ class _VerPorFechaState extends State<VerPorFecha> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Lista de Pacientes.',
+              'Lista de Pacientes',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,

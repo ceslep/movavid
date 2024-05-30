@@ -13,15 +13,18 @@ class TextFieldI extends StatefulWidget {
   final int? maxLines;
   final bool? dropdown;
   final String? codexamen;
-  const TextFieldI(
-      {super.key,
-      required this.labelText,
-      required this.controller,
-      this.colort = Colors.blue,
-      this.minLines = 1,
-      this.maxLines = 2,
-      this.dropdown = false,
-      this.codexamen = ''});
+  final String? nombreExamen;
+  const TextFieldI({
+    super.key,
+    required this.labelText,
+    required this.controller,
+    this.colort = Colors.blue,
+    this.minLines = 1,
+    this.maxLines = 2,
+    this.dropdown = false,
+    this.codexamen = '',
+    this.nombreExamen = '',
+  });
 
   @override
   State<TextFieldI> createState() => _TextFieldIState();
@@ -31,6 +34,7 @@ class _TextFieldIState extends State<TextFieldI> {
   List<DropDownValueModel> options = [];
   List<String> soptions = [];
   FocusNode fnode = FocusNode();
+  int tapCount = 0;
 
   @override
   void initState() {
@@ -68,10 +72,10 @@ class _TextFieldIState extends State<TextFieldI> {
             onChanged: (value) {},
             controller: controller,
             decoration: InputDecoration(
-              focusColor: Colors.lightBlue.shade100,
+              focusColor: const Color.fromARGB(255, 180, 252, 179),
               labelText: labelText,
               labelStyle: const TextStyle(
-                color: Colors.blueGrey,
+                color: Color.fromARGB(255, 107, 139, 96),
               ),
             ),
             style: TextStyle(color: color),
@@ -80,6 +84,8 @@ class _TextFieldIState extends State<TextFieldI> {
             ? EditableDropdown(
                 controller: widget.controller,
                 options: soptions,
+                codexamen: widget.codexamen!,
+                nombreExamen: widget.nombreExamen!,
               )
             : const SizedBox();
   }
@@ -90,23 +96,3 @@ class _TextFieldIState extends State<TextFieldI> {
         widget.labelText, widget.controller, widget.colort!);
   }
 }
-
-/* 
-DropDownTextField(
-                textFieldFocusNode: fnode,
-                textFieldDecoration: const InputDecoration(
-                  hintText: 'Seleccione el valor',
-                ),
-                controller: _cnt,
-                dropDownList: options,
-                dropDownItemCount: options.length + 1,
-                onChanged: (val) {
-                  try {
-                    print({"-->": val});
-                    controller.text = val.value.toString();
-                    setState(() {});
-                  } catch (e) {
-                    print(e);
-                  }
-                },
-              ) */
