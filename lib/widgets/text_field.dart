@@ -14,17 +14,18 @@ class TextFieldI extends StatefulWidget {
   final bool? dropdown;
   final String? codexamen;
   final String? nombreExamen;
-  const TextFieldI({
-    super.key,
-    required this.labelText,
-    required this.controller,
-    this.colort = Colors.blue,
-    this.minLines = 1,
-    this.maxLines = 2,
-    this.dropdown = false,
-    this.codexamen = '',
-    this.nombreExamen = '',
-  });
+  final String? campo;
+  const TextFieldI(
+      {super.key,
+      required this.labelText,
+      required this.controller,
+      this.colort = Colors.blue,
+      this.minLines = 1,
+      this.maxLines = 2,
+      this.dropdown = false,
+      this.codexamen = '',
+      this.nombreExamen = '',
+      this.campo = ''});
 
   @override
   State<TextFieldI> createState() => _TextFieldIState();
@@ -43,9 +44,8 @@ class _TextFieldIState extends State<TextFieldI> {
       () {},
     );
     if (widget.dropdown!) {
-      getItemsExamen(context, widget.codexamen!).then((value) {
+      getItemsExamen(context, widget.codexamen!, widget.campo!).then((value) {
         soptions = value;
-
         setState(() {});
       });
     }
@@ -86,7 +86,7 @@ class _TextFieldIState extends State<TextFieldI> {
                 options: soptions,
                 codexamen: widget.codexamen!,
                 nombreExamen: widget.nombreExamen!,
-              )
+                campo: widget.campo!)
             : const SizedBox();
   }
 

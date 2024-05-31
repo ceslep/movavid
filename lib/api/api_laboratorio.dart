@@ -741,12 +741,12 @@ Future<DataHemat> getDataHemat(
 }
 
 Future<List<String>> getItemsExamen(
-    BuildContext context, String codexamen) async {
+    BuildContext context, String codexamen, String campo) async {
   //List<String> items = [' ' * 6];
   List<String> items = [''];
   final urlProvider = Provider.of<UrlProvider>(context, listen: false);
   Uri url = Uri.parse('${urlProvider.url}getItemsExamenes.php');
-  final String bodyData = json.encode({"codexamen": codexamen});
+  final String bodyData = json.encode({"codexamen": codexamen, "campo": campo});
   try {
     final response = await http.post(url, body: bodyData);
     if (response.statusCode == 200) {
@@ -760,6 +760,24 @@ Future<List<String>> getItemsExamen(
   } catch (e) {
     print(e);
     return [];
+  }
+}
+
+Future<bool> guardarItemsExamen(
+    BuildContext context, String codexamen, String campo, String items) async {
+  final urlProvider = Provider.of<UrlProvider>(context, listen: false);
+  Uri url = Uri.parse('${urlProvider.url}guardarItemsExamenes.php');
+  final String bodyData =
+      json.encode({"codexamen": codexamen, "campo": campo, "items": items});
+  try {
+    final response = await http.post(url, body: bodyData);
+    if (response.statusCode == 200) {
+      return true;
+    }
+    return false;
+  } catch (e) {
+    print(e);
+    return false;
   }
 }
 

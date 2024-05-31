@@ -234,13 +234,13 @@ class _ViewExamenTipo1State extends State<ViewExamenTipo1> {
                       SizedBox(
                         width: 0.76 * MediaQuery.of(context).size.width,
                         child: TextFieldI(
-                          labelText: 'Valoración',
-                          controller: valoracionController,
-                          dropdown: examenesWithItems(
-                              widget.codexamen, widget.exameneswi),
-                          codexamen: widget.codexamen,
-                          nombreExamen: nexamen,
-                        ),
+                            labelText: 'Valoración',
+                            controller: valoracionController,
+                            dropdown: examenesWithItems(
+                                widget.codexamen, widget.exameneswi),
+                            codexamen: widget.codexamen,
+                            nombreExamen: nexamen,
+                            campo: 'Valoracion'),
                       ),
                       SizedBox(
                         width: 0.1 * MediaQuery.of(context).size.width,

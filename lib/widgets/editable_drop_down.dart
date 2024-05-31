@@ -1,18 +1,21 @@
 // ignore_for_file: avoid_print
 
 import 'package:flutter/material.dart';
+import 'package:movavid/api/api_laboratorio.dart';
 
 class EditableDropdown extends StatefulWidget {
   final TextEditingController controller;
   final List<String> options;
   final String codexamen;
   final String nombreExamen;
+  final String campo;
   const EditableDropdown(
       {super.key,
       required this.controller,
       required this.options,
       required this.codexamen,
-      required this.nombreExamen});
+      required this.nombreExamen,
+      required this.campo});
 
   @override
   State<EditableDropdown> createState() => _EditableDropdownState();
@@ -150,7 +153,7 @@ class _EditableDropdownState extends State<EditableDropdown> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Cancelar'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -158,7 +161,26 @@ class _EditableDropdownState extends State<EditableDropdown> {
             TextButton(
               child: const Text('OK'),
               onPressed: () {
-                Navigator.of(context).pop();
+                String json = '[';
+                String item = '';
+                for (int i = 0; i < controllers.length; i++) {
+                  if (controllers[i].text != '') {
+                    item = '{"item":"${controllers[i].text}"}';
+                    json += '$item,';
+                  }
+                }
+                json = json.substring(0, json.length - 1);
+                json += ']';
+                print(json);
+                guardarItemsExamen(
+                        context, widget.codexamen, widget.campo, json)
+                    .then(
+                  (value) {
+                    if (value) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                );
               },
             ),
           ],
