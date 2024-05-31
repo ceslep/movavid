@@ -21,13 +21,14 @@ class EditableDropdown extends StatefulWidget {
 class _EditableDropdownState extends State<EditableDropdown> {
   late String? _selectedItem;
   final List<TextEditingController> controllers = [];
-
+  List<String> options = [];
   @override
   void initState() {
     super.initState();
+    options = widget.options;
     _selectedItem = widget.controller.text;
-    for (var i = 0; i < widget.options.length; i++) {
-      var controller = TextEditingController(text: widget.options[i]);
+    for (var i = 0; i < options.length; i++) {
+      var controller = TextEditingController(text: options[i]);
       controller.addListener(() {
         print('Text in field $i changed to: ${controller.text}');
       });
@@ -67,8 +68,8 @@ class _EditableDropdownState extends State<EditableDropdown> {
                         widget.controller.text = newValue!;
                       });
                     },
-                    items: widget.options
-                        .map<DropdownMenuItem<String>>((String value) {
+                    items:
+                        options.map<DropdownMenuItem<String>>((String value) {
                       return DropdownMenuItem<String>(
                         value: value,
                         child: Text(
@@ -92,7 +93,7 @@ class _EditableDropdownState extends State<EditableDropdown> {
                 top: -5,
                 child: IconButton(
                   onPressed: () {
-                    setItems(context);
+                    setItems(context, options);
                   },
                   icon: const Icon(Icons.settings,
                       size: 20, color: Color.fromARGB(255, 6, 112, 10)),
@@ -105,37 +106,44 @@ class _EditableDropdownState extends State<EditableDropdown> {
     );
   }
 
-  Future<dynamic> setItems(BuildContext context) {
+  Future<dynamic> setItems(BuildContext context, List<String> optionS) {
     return showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          title: Text('Modificar Items de ${widget.nombreExamen}'),
+          surfaceTintColor: Colors.white,
+          title: Text('Items de ${widget.nombreExamen}'),
           content: Form(
             child: SizedBox(
-              width: double.maxFinite,
+              width: 350,
               child: ListView.builder(
                 shrinkWrap: true,
-                itemCount: widget.options.length,
+                itemCount: optionS.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return widget.options[index] != ''
-                      ? ListTile(
-                          title: Row(
-                            children: [
-                              SizedBox(
-                                width: 0.6 * MediaQuery.of(context).size.width,
-                                child: TextFormField(
-                                  controller: controllers[index],
-                                  style: const TextStyle(
-                                      color: Colors.green, fontSize: 10),
-                                ),
+                  return ListTile(
+                    title: Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            width: 0.8 * 350,
+                            child: TextFormField(
+                              controller: controllers[index],
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontSize: 10,
                               ),
-                            ],
+                              decoration: InputDecoration(
+                                fillColor: Colors.white,
+                                border: const OutlineInputBorder(),
+                                labelText: 'Item ${index + 1}',
+                              ),
+                            ),
                           ),
-                        )
-                      : const SizedBox();
+                        ),
+                      ],
+                    ),
+                  );
                 },
               ),
             ),
