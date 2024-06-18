@@ -32,7 +32,6 @@ class HemogramaRayto {
   final String? monocitos;
   final String? observaciones;
   final String? doctor;
-  final String? exportar;
   final String? examenind;
   final String? citasind;
   final String? indice;
@@ -67,7 +66,6 @@ class HemogramaRayto {
     this.monocitos,
     this.observaciones,
     this.doctor,
-    this.exportar,
     this.examenind,
     this.citasind,
     this.indice,
@@ -103,7 +101,6 @@ class HemogramaRayto {
         monocitos: json["monocitos"].toString(),
         observaciones: json["observaciones"].toString(),
         doctor: json["doctor"].toString(),
-        exportar: json["exportar"].toString(),
         examenind: json["examenind"].toString(),
         citasind: json["citasind"].toString(),
         indice: json["indice"].toString(),
@@ -139,7 +136,6 @@ class HemogramaRayto {
         "monocitos": monocitos,
         "observaciones": observaciones,
         "doctor": doctor,
-        "exportar": exportar,
         "examenind": examenind,
         "citasind": citasind,
         "indice": indice,

@@ -16,7 +16,6 @@ class ExamenTipo1 {
   String? valoracion;
   String? fecha;
   String? bacteriologo;
-  String? exportar;
   String? examenind;
   String? citasind;
   String? indice;
@@ -38,7 +37,6 @@ class ExamenTipo1 {
     this.valoracion,
     this.fecha,
     this.bacteriologo,
-    this.exportar,
     this.examenind,
     this.citasind,
     this.indice,
@@ -61,7 +59,6 @@ class ExamenTipo1 {
         valoracion: json["valoracion"].toString(),
         fecha: json["fecha"].toString(),
         bacteriologo: json["bacteriologo"].toString(),
-        exportar: json["exportar"].toString(),
         examenind: json["examenind"].toString(),
         citasind: json["citasind"].toString(),
         indice: json["indice"].toString(),
@@ -84,7 +81,6 @@ class ExamenTipo1 {
         "valoracion": valoracion,
         "fecha": fecha,
         "bacteriologo": bacteriologo,
-        "exportar": exportar,
         "examenind": examenind,
         "citasind": citasind,
         "indice": indice,
