@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/frotis_vaginal_model.dart';
 import 'package:movavid/models/paciente.dart';
+import 'package:movavid/widgets/appbar/appbare.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
 import 'package:movavid/widgets/modals/modal_fit.dart';
 
@@ -81,6 +82,7 @@ class _ViewFrotisVaginalState extends State<ViewFrotisVaginal> {
   }
 
   Widget _buildTextField(String labelText, TextEditingController controller) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     String value = controller.text;
     value = value != 'null' ? value : '';
     controller.text = value;
@@ -96,167 +98,56 @@ class _ViewFrotisVaginalState extends State<ViewFrotisVaginal> {
       controller: controller,
       decoration: InputDecoration(
         labelText: labelText,
-        labelStyle: const TextStyle(
-          color: Colors.blueGrey,
-        ),
+        hintText: labelText,
       ),
-      style: const TextStyle(color: Colors.blue),
+      style: TextStyle(color: scheme.onSurface),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        foregroundColor: Colors.black,
-        title: const Text(
-          'Registro de Exámenes',
-          style: TextStyle(
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: !guardando_
-                ? IconButton(
-                    onPressed: () async {
-                      setState(() => guardando_ = !guardando_);
-                      guardarFrotisVaginal(
-                              context, frotisVaginalS, widget.codexamen)
-                          .then(
-                        (value) {
-                          if (true) {
-                            printPDFFile(
-                              context,
-                              "frotisVaginal",
-                              "Frotis Vaginal",
-                              "frotis_${widget.paciente.identificacion}_${widget.fecha}.pdf",
-                              widget.paciente.identificacion!,
-                              widget.fecha,
-                              widget.paciente.nombreCompleto,
-                              widget.paciente.edad,
-                            );
-                          }
-                          setState(() => guardando_ = !guardando_);
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.print,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: !guardando_
-                ? IconButton(
-                    onPressed: () async {
-                      setState(() => guardando_ = !guardando_);
-                      guardarFrotisVaginal(
-                              context, frotisVaginalS, widget.codexamen)
-                          .then(
-                        (value) {
-                          showFloatingModalBottomSheet(
-                            context: context,
-                            builder: (context) => const ModalFit(
-                              title: 'Exámen Frotis Vaginal almacenado',
-                              asset: 'images/lab.png',
-                            ),
-                          );
-                          setState(() => guardando_ = !guardando_);
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.save,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const CircleAvatar(
-                    backgroundImage: AssetImage('images/frotis.png'),
-                  ),
-                  const SizedBox(width: 2),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Frotis Vaginal',
-                        style: TextStyle(
-                          fontSize: 18,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.paciente.nombreCompleto,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                ),
-                              ),
-                              Text(
-                                widget.fecha,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.brown,
-                                ),
-                              )
-                            ],
-                          ),
-                          const SizedBox(
-                            width: 5,
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ],
+    return ExamViewScaffold(
+      asset: 'images/frotis.png',
+      examen: 'Frotis Vaginal',
+      paciente: widget.paciente,
+      fecha: widget.fecha,
+      guardando: guardando_,
+      onPrint: () {
+        setState(() => guardando_ = !guardando_);
+        guardarFrotisVaginal(context, frotisVaginalS, widget.codexamen).then(
+          (value) {
+            if (true) {
+              printPDFFile(
+                context,
+                "frotisVaginal",
+                "Frotis Vaginal",
+                "frotis_${widget.paciente.identificacion}_${widget.fecha}.pdf",
+                widget.paciente.identificacion!,
+                widget.fecha,
+                widget.paciente.nombreCompleto,
+                widget.paciente.edad,
+              );
+            }
+            setState(() => guardando_ = !guardando_);
+          },
+        );
+      },
+      onSave: () {
+        setState(() => guardando_ = !guardando_);
+        guardarFrotisVaginal(context, frotisVaginalS, widget.codexamen).then(
+          (value) {
+            showFloatingModalBottomSheet(
+              context: context,
+              builder: (context) => const ModalFit(
+                title: 'Exámen Frotis Vaginal almacenado',
+                asset: 'images/lab.png',
               ),
-              Form(
+            );
+            setState(() => guardando_ = !guardando_);
+          },
+        );
+      },
+      body: Form(
                 onChanged: () {
                   frotisVaginalS.identificacion =
                       widget.paciente.identificacion;
@@ -321,10 +212,6 @@ class _ViewFrotisVaginalState extends State<ViewFrotisVaginal> {
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

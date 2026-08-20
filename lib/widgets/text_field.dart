@@ -72,10 +72,12 @@ class _TextFieldIState extends State<TextFieldI> {
             onChanged: (value) {},
             controller: controller,
             decoration: InputDecoration(
-              focusColor: const Color.fromARGB(255, 180, 252, 179),
               labelText: labelText,
-              labelStyle: const TextStyle(
-                color: Color.fromARGB(255, 107, 139, 96),
+              hintText: labelText,
+              prefixIcon: Icon(
+                Icons.edit_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 18,
               ),
             ),
             style: TextStyle(color: color),

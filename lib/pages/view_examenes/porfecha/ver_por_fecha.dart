@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/paciente.dart';
+import 'package:movavid/pages/consulta_examenes.dart';
+import 'package:movavid/widgets/app_page.dart';
 import 'package:movavid/widgets/date_picker.dart';
-
-import '../../consulta_examenes.dart';
+import 'package:movavid/widgets/empty_state.dart';
 
 class VerPorFecha extends StatefulWidget {
   final List<Paciente> pacientes;
@@ -27,16 +28,17 @@ class _VerPorFechaState extends State<VerPorFecha> {
     super.initState();
     _fechaController.addListener(
       () {
-        print(_fechaController.text);
         setState(() {
-          consultando = !consultando;
+          consultando = true;
         });
         getPacientesFecha(context, _fechaController.text).then(
           (value) {
             pacientess = value;
-            setState(() {
-              consultando = !consultando;
-            });
+            if (mounted) {
+              setState(() {
+                consultando = false;
+              });
+            }
           },
         );
       },
@@ -46,78 +48,89 @@ class _VerPorFechaState extends State<VerPorFecha> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Lista de Pacientes',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Exámenes por fecha',
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: buildDatePicker(
+              context,
+              _fechaController,
+              'Fecha de Exámenes',
             ),
-          ],
-        ),
-      ),
-      body: !consultando
-          ? ListView.builder(
-              itemCount: pacientess.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: buildDatePicker(
-                        context,
-                        _fechaController,
-                        'Fecha de Exámenes',
-                      ));
-                } else {
-                  int indexx = index - 1;
-                  String nombreCompleto = pacientess[indexx].nombreCompleto;
-                  String identificacion = pacientess[indexx].identificacion!;
-                  String sexo = pacientess[indexx].genero!;
-                  Paciente paciente = pacientess[indexx];
-                  return Card(
-                    child: ListTile(
-                      title: Text(nombreCompleto),
-                      subtitle: Text(identificacion),
-                      leading: CircleAvatar(
-                        backgroundImage: sexo == 'Masculino'
-                            ? const AssetImage('images/male.png')
-                            : const AssetImage('images/female.png'),
-                      ),
-                      trailing: IconButton(
-                        onPressed: () async {
-                          var result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ConsultaExamenes(
-                                paciente: paciente,
-                                fecha: _fechaController.text,
+          ),
+          Expanded(
+            child: consultando
+                ? const Center(child: CircularProgressIndicator())
+                : pacientess.isEmpty
+                    ? EmptyState(
+                        icon: Icons.event_busy_rounded,
+                        title: 'No hay pacientes con exámenes',
+                        subtitle:
+                            'Cambie la fecha o registre exámenes para este día.',
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: pacientess.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final Paciente paciente = pacientess[index];
+                          final String sexo = paciente.genero!;
+                          return Card(
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                radius: 24,
+                                backgroundImage: AssetImage(
+                                  sexo == 'Masculino'
+                                      ? 'images/male.png'
+                                      : 'images/female.png',
+                                ),
+                              ),
+                              title: Text(
+                                paciente.nombreCompleto,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'CC: ${paciente.identificacion}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: scheme.onSurfaceVariant,
+                                ),
+                              ),
+                              trailing: IconButton.filledTonal(
+                                onPressed: () async {
+                                  var result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ConsultaExamenes(
+                                        paciente: paciente,
+                                        fecha: _fechaController.text,
+                                      ),
+                                    ),
+                                  );
+                                  if (result == 'home' && mounted) {
+                                    Navigator.pop(context, 'home');
+                                  }
+                                },
+                                tooltip: 'Ver exámenes',
+                                icon: Icon(
+                                  Icons.visibility_rounded,
+                                  color: scheme.primary,
+                                ),
                               ),
                             ),
                           );
-                          if (result == 'home') {
-                            if (mounted) {
-                              // ignore: use_build_context_synchronously
-                              Navigator.pop(context, 'home');
-                            }
-                          }
                         },
-                        icon: const Icon(Icons.remove_red_eye,
-                            color: Colors.blue),
                       ),
-                    ),
-                  );
-                }
-              },
-            )
-          : const Center(
-              child: CircularProgressIndicator(),
-            ),
+          ),
+        ],
+      ),
     );
   }
 }

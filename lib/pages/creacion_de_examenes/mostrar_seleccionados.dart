@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/models/procedimientos_model.dart';
+import 'package:movavid/widgets/app_page.dart';
+import 'package:movavid/widgets/empty_state.dart';
+import 'package:movavid/widgets/loading_overlay.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
 import 'package:movavid/widgets/modals/modal_fit.dart';
 
@@ -30,128 +33,201 @@ class _MostrarSeleccionadosState extends State<MostrarSeleccionados> {
     seleccionadoss = widget.seleccionados;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.amber,
-        title: const Text('Exámenes Seleccionados'),
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context, seleccionadoss);
-          },
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.brown,
-          ),
+  Future<void> _confirmarGuardar() async {
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.save_rounded,
+          size: 30,
+          color: Theme.of(context).colorScheme.primary,
         ),
+        title: const Text('Guardar exámenes'),
+        content: Text(
+            '¿Desea guardar los ${seleccionadoss.length} exámenes seleccionados?'),
         actions: [
-          widget.aguardar
-              ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: !guardando_
-                      ? IconButton(
-                          onPressed: () {
-                            Navigator.pop(context, 'home');
-                          },
-                          icon: const Icon(Icons.home),
-                        )
-                      : const Padding(
-                          padding: EdgeInsets.only(right: 18),
-                          child: SizedBox(
-                            width: 10,
-                            height: 10,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
-                )
-              : const SizedBox(),
-          widget.aguardar
-              ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: !guardando_
-                      ? IconButton(
-                          onPressed: () {
-                            setState(() => guardando_ = !guardando_);
-                            guardarExamenes(
-                                    context,
-                                    seleccionadoss,
-                                    widget.paciente.identificacion!,
-                                    widget.fecha)
-                                .then(
-                              (value) {
-                                showFloatingModalBottomSheet(
-                                  context: context,
-                                  builder: (context) => const ModalFit(
-                                    title: 'Exámenes almacenados',
-                                    asset: 'images/logo.png',
-                                  ),
-                                );
-                                setState(() => guardando_ = !guardando_);
-                              },
-                            );
-                          },
-                          icon: const Icon(Icons.save),
-                        )
-                      : const Padding(
-                          padding: EdgeInsets.only(right: 18),
-                          child: SizedBox(
-                            width: 10,
-                            height: 10,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          ),
-                        ),
-                )
-              : const SizedBox(),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Guardar'),
+          ),
         ],
       ),
-      body: seleccionadoss.isNotEmpty
-          ? ListView.builder(
-              itemCount: seleccionadoss.length + 1,
-              itemBuilder: (context, index) {
-                if (index == 0) {
-                  return Card(
-                    child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: widget.paciente.genero! == 'Masculino'
-                            ? const AssetImage('images/male.png')
-                            : const AssetImage('images/female.png'),
-                      ),
-                      title: Text(
-                        widget.paciente.nombreCompleto,
-                      ),
-                      subtitle: Text(
-                        widget.paciente.identificacion!,
+    );
+    if (ok == true) _guardar();
+  }
+
+  void _guardar() {
+    setState(() => guardando_ = true);
+    guardarExamenes(context, seleccionadoss, widget.paciente.identificacion!,
+            widget.fecha)
+        .then(
+      (value) {
+        if (!mounted) return;
+        setState(() => guardando_ = false);
+        showFloatingModalBottomSheet(
+          context: context,
+          builder: (context) => const ModalFit(
+            title: 'Exámenes almacenados',
+            asset: 'images/logo.png',
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Exámenes Seleccionados',
+      actions: [
+        if (widget.aguardar) ...[
+          IconButton(
+            onPressed: guardando_
+                ? null
+                : () {
+                    Navigator.pop(context, 'home');
+                  },
+            tooltip: 'Inicio',
+            icon: const Icon(Icons.home_rounded),
+          ),
+          IconButton(
+            onPressed: guardando_ ? null : _confirmarGuardar,
+            tooltip: 'Guardar',
+            icon: guardando_
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(Icons.save_rounded, color: scheme.primary),
+          ),
+        ],
+      ],
+      body: LoadingOverlay(
+        visible: guardando_,
+        message: 'Guardando exámenes...',
+        child: seleccionadoss.isNotEmpty
+          ? Column(
+              children: [
+                Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 24,
+                      backgroundImage:
+                          widget.paciente.genero! == 'Masculino'
+                              ? const AssetImage('images/male.png')
+                              : const AssetImage('images/female.png'),
+                    ),
+                    title: Text(
+                      widget.paciente.nombreCompleto,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  );
-                } else {
-                  int indexx = index - 1;
-                  return index >= 0
-                      ? Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Card(
-                            child: ListTile(
-                              title: Text(seleccionadoss[indexx].nombre!),
-                              trailing: ElevatedButton(
-                                child: const Icon(Icons.delete),
-                                onPressed: () {
-                                  seleccionadoss.removeAt(indexx);
-                                  setState(() {});
-                                },
-                              ),
+                    subtitle: Text(widget.paciente.identificacion!),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${seleccionadoss.length} exámenes',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: scheme.primary,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        widget.fecha,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: seleccionadoss.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final int indexx = index;
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            radius: 16,
+                            backgroundColor:
+                                scheme.primaryContainer,
+                            child: Icon(
+                              Icons.biotech_rounded,
+                              size: 18,
+                              color: scheme.onPrimaryContainer,
                             ),
                           ),
-                        )
-                      : const SizedBox();
-                }
-              },
+                          title: Text(
+                            seleccionadoss[indexx].nombre!,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          trailing: IconButton(
+                            tooltip: 'Quitar',
+                            onPressed: () {
+                              seleccionadoss.removeAt(indexx);
+                              setState(() {});
+                            },
+                            icon: Icon(
+                              Icons.delete_outline_rounded,
+                              color: scheme.error,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                if (widget.aguardar)
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: guardando_ ? null : _confirmarGuardar,
+                        icon: guardando_
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.save_rounded),
+                        label: Text(
+                            guardando_ ? 'Guardando...' : 'Guardar Exámenes'),
+                      ),
+                    ),
+                  ),
+              ],
             )
-          : const SizedBox(),
+          : EmptyState(
+              icon: Icons.assignment_rounded,
+              title: 'Sin exámenes seleccionados',
+              subtitle: 'Seleccione al menos un examen para continuar.',
+            ),
+      ),
     );
   }
 }

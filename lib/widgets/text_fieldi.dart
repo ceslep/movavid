@@ -78,15 +78,12 @@ class TextFieldi extends StatefulWidget {
 }
 
 class _TextFieldiState extends State<TextFieldi> {
-// int fieldiCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final bool ok = widget.fieldiCount >= widget.count;
+    final Color accent = widget.color;
+
     return TextField(
       onChanged: (value) {
         if (widget.isCorreo) {
@@ -107,37 +104,32 @@ class _TextFieldiState extends State<TextFieldi> {
       ],
       decoration: InputDecoration(
         error: widget.isCorreo
-            ? !widget.correoValido
-                ? const Text(
-                    'Correo  inválido',
-                    style: TextStyle(color: Colors.red, fontSize: 10),
-                  )
-                : const Text(
-                    'Correo Válido',
-                    style: TextStyle(color: Colors.blue, fontSize: 10),
-                  )
-            : null,
-        errorBorder: !widget.correoValido
-            ? const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.red),
+            ? Text(
+                widget.correoValido ? 'Correo válido' : 'Correo inválido',
+                style: TextStyle(
+                  color: widget.correoValido ? scheme.primary : scheme.error,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               )
-            : const OutlineInputBorder(
-                borderSide: BorderSide(color: Colors.blue),
-              ),
-        border: const OutlineInputBorder(),
-        hintText: widget.hintText,
-        label: Text(
-          widget.field,
-          style: TextStyle(color: widget.color),
+            : null,
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: widget.correoValido ? scheme.primary : scheme.error,
+          ),
         ),
+        hintText: widget.hintText,
+        label: Text(widget.field, style: TextStyle(color: accent)),
         counter: Text(
           widget.count > 0
-              ? '${widget.fieldiCount.toString()} de Mínimo  ${widget.count} Caracteres'
+              ? '${widget.fieldiCount.toString()} de Mínimo ${widget.count} Caracteres'
               : '',
           style: TextStyle(
-              color:
-                  widget.fieldiCount >= widget.count ? Colors.blue : Colors.red,
-              fontSize: 10),
+            color: ok ? scheme.primary : scheme.error,
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
       keyboardType: widget.keyboardType,

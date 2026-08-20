@@ -3,8 +3,10 @@
 import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/procedimientos_model.dart';
+import 'package:movavid/widgets/app_page.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
 import 'package:movavid/widgets/modals/modal_fit.dart';
+import 'package:movavid/widgets/section_card.dart';
 
 class ProcedimientosPage extends StatefulWidget {
   final Procedimientos procedimiento;
@@ -46,192 +48,158 @@ class _ProcedimientosPageState extends State<ProcedimientosPage> {
     procedimientoss = widget.procedimiento;
   }
 
+  void _nuevo() {
+    setState(() {
+      nuevo = true;
+      procedimientoss = Procedimientos();
+      nombreController.text = '';
+      tablaController.text = '';
+      infoController.text = '';
+      unidadesController.text = '';
+      tipoController.text = '';
+      tipoProcedimientoController.text = '';
+      abreviaturaController.text = '';
+      colorController.text = '';
+    });
+  }
+
+  void _guardar() {
+    if (nombreController.text.isEmpty) return;
+    setState(() => guardando_ = true);
+    guardarProcedimiento(context, procedimientoss).then((value) {
+      if (!mounted) return;
+      showFloatingModalBottomSheet(
+        context: context,
+        builder: (context) => const ModalFit(
+          title: 'Exámen actualizado',
+          asset: 'images/logo.png',
+        ),
+      );
+      setState(() => guardando_ = false);
+    });
+  }
+
+  Widget _campo(String label, TextEditingController controller,
+      {bool readOnly = false, int minLines = 1, int maxLines = 1}) {
+    return TextFormField(
+      readOnly: readOnly && !nuevo,
+      minLines: minLines,
+      maxLines: maxLines,
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: label,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.lightGreenAccent,
-        title: Text('Editar Exámen ${widget.procedimiento.codigo}'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              nuevo = true;
-              procedimientoss = Procedimientos();
-              nombreController.text = '';
-              tablaController.text = '';
-              infoController.text = '';
-              unidadesController.text = '';
-              tipoController.text = '';
-              tipoProcedimientoController.text = '';
-              abreviaturaController.text = '';
-              colorController.text = '';
-            },
-            icon: const Icon(Icons.new_releases, color: Colors.white),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: !guardando_
-                ? IconButton(
-                    onPressed: () async {
-                      if (nombreController.text.isEmpty) return;
-                      setState(() => guardando_ = !guardando_);
-                      guardarProcedimiento(context, procedimientoss)
-                          .then((value) {
-                        showFloatingModalBottomSheet(
-                          context: context,
-                          builder: (context) => const ModalFit(
-                            title: 'Exámen actualizado',
-                            asset: 'images/logo.png',
-                          ),
-                        );
-                        setState(() => guardando_ = !guardando_);
-                      });
-                    },
-                    icon: const Icon(Icons.save),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(right: 14),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Exámen ${widget.procedimiento.codigo}',
+      actions: [
+        IconButton(
+          onPressed: _nuevo,
+          tooltip: 'Nuevo examen',
+          icon: const Icon(Icons.new_releases_rounded),
+        ),
+        IconButton(
+          onPressed: guardando_ ? null : _guardar,
+          tooltip: 'Guardar',
+          icon: guardando_
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(Icons.save_rounded, color: scheme.primary),
+        ),
+      ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Form(
+          autovalidateMode: AutovalidateMode.always,
+          onChanged: () => {
+            procedimientoss.color = colorController.text,
+            procedimientoss.unidades = unidadesController.text,
+            procedimientoss.constante = constanteController.text,
+            procedimientoss.info = infoController.text,
+            procedimientoss.tipoprocedimiento =
+                tipoProcedimientoController.text,
+            procedimientoss.abreviatura = abreviaturaController.text,
+            color = colorController.text,
+            if (color.isNotEmpty)
+              {
+                colores = color.split(";"),
+                if (colores.length == 3)
+                  {
+                    colc = Color.fromARGB(0, int.parse(colores[0]),
+                        int.parse(colores[1]), int.parse(colores[2])),
+                    setState(() {})
+                  }
+              }
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SectionCard(
+                title: 'Información general',
+                icon: Icons.info_rounded,
+                child: Column(
+                  children: [
+                    _campo('Nombre Exámen', nombreController,
+                        readOnly: true, minLines: 1, maxLines: 3),
+                    const SizedBox(height: 12),
+                    _campo('Tabla', tablaController, readOnly: true),
+                    const SizedBox(height: 12),
+                    _campo('Tipo', tipoController, readOnly: true),
+                    const SizedBox(height: 12),
+                    _campo(
+                        'Tipo de Procedimiento', tipoProcedimientoController),
+                    const SizedBox(height: 12),
+                    _campo('Abreviatura', abreviaturaController),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+              SectionCard(
+                title: 'Valores del examen',
+                icon: Icons.science_rounded,
+                child: Column(
+                  children: [
+                    _campo('Info', infoController, minLines: 1, maxLines: 3),
+                    const SizedBox(height: 12),
+                    _campo('Constante', constanteController),
+                    const SizedBox(height: 12),
+                    _campo('Unidades', unidadesController),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      onChanged: (value) {},
+                      controller: colorController,
+                      decoration: InputDecoration(
+                        labelText: 'Color',
+                        hintText: 'Color (r;g;b)',
+                        fillColor: colc,
                       ),
                     ),
-                  ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Form(
-            autovalidateMode: AutovalidateMode.always,
-            onChanged: () => {
-              procedimientoss.color = colorController.text,
-              procedimientoss.unidades = unidadesController.text,
-              procedimientoss.constante = constanteController.text,
-              procedimientoss.info = infoController.text,
-              procedimientoss.tipoprocedimiento =
-                  tipoProcedimientoController.text,
-              procedimientoss.abreviatura = abreviaturaController.text,
-              print(procedimientoss.toJson()),
-              color = colorController.text,
-              if (color.isNotEmpty)
-                {
-                  colores = color.split(";"),
-                  if (colores.length == 3)
-                    {
-                      colc = Color.fromARGB(0, int.parse(colores[0]),
-                          int.parse(colores[1]), int.parse(colores[2])),
-                      setState(() {})
-                    }
-                }
-            },
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    readOnly: true && !nuevo,
-                    minLines: 1,
-                    maxLines: 3,
-                    controller: nombreController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Nombre Exámen',
-                    ),
-                  ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    readOnly: true && !nuevo,
-                    controller: tablaController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Tabla',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    minLines: 1,
-                    maxLines: 3,
-                    controller: infoController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Info',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    onChanged: (value) {},
-                    controller: colorController,
-                    decoration: InputDecoration(
-                      fillColor: colc,
-                      border: const OutlineInputBorder(),
-                      labelText: 'Color',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: constanteController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Constante',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: unidadesController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Unidades',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    readOnly: true && !nuevo,
-                    controller: tipoController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Tipo',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: tipoProcedimientoController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Tipo de Procedimiento',
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    controller: abreviaturaController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      labelText: 'Abreviatura',
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: guardando_ ? null : _guardar,
+                icon: guardando_
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.save_rounded),
+                label: Text(guardando_ ? 'Guardando...' : 'Guardar Exámen'),
+              ),
+              const SizedBox(height: 24),
+            ],
           ),
         ),
       ),

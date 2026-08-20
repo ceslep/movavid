@@ -10,10 +10,15 @@ import 'package:image_picker/image_picker.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/functions/show_toast.dart';
 import 'package:movavid/models/configuracion_model.dart';
+import 'package:movavid/providers/url_provider.dart';
+import 'package:movavid/widgets/app_page.dart';
+import 'package:movavid/widgets/loading_overlay.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
 import 'package:movavid/widgets/modals/modal_fit.dart';
+import 'package:movavid/widgets/section_card.dart';
 import 'package:movavid/widgets/text_field.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:provider/provider.dart';
 
 class Fimage {
   File fileImg;
@@ -27,14 +32,14 @@ class Fimage {
     if (fileImgStr64 != '') {
       try {
         final bytes =
-            base64Decode(fileImgStr64); // Use ! for non-null assertion
+            base64Decode(fileImgStr64);
         return MemoryImage(bytes);
       } catch (error) {
         print('Error decoding image: $error');
-        return null; // Or return a default image provider
+        return null;
       }
     } else {
-      return null; // Or return a default image provider
+      return null;
     }
   }
 }
@@ -49,9 +54,12 @@ class Configuracion extends StatefulWidget {
 class _ConfiguracionState extends State<Configuracion> {
   bool cargando = false;
   bool guardando = false;
+  bool probando = false;
+  bool? conexionOk;
   FToast fToast = FToast();
   Color colort = Colors.amber;
   ConfiguracionModel configuracion = ConfiguracionModel();
+  late final TextEditingController urlServidorController = TextEditingController();
   late final TextEditingController nitLaboratorioController =
       TextEditingController();
   late final TextEditingController nombreLaboratorioController =
@@ -66,10 +74,8 @@ class _ConfiguracionState extends State<Configuracion> {
       TextEditingController();
   late final TextEditingController bacteriologoLaboratorioController =
       TextEditingController();
-
   late final TextEditingController tarjetaPLaboratorioController =
       TextEditingController();
-
   late final TextEditingController urlFirmaLaboratorioController =
       TextEditingController();
   late final TextEditingController urlLogoLaboratorioController =
@@ -77,44 +83,49 @@ class _ConfiguracionState extends State<Configuracion> {
 
   String imageFirma = '';
   String imageLogo = '';
-
   File? fimageFirma;
   Uint8List uil = Uint8List(0);
   Fimage fimage = Fimage(File(''), '');
   Fimage fimageLogo = Fimage(File(''), '');
 
+  String _cortar(String? valor) {
+    if (valor == null || valor.isEmpty) return '';
+    return valor.length > 180 ? valor.substring(0, 180) : valor;
+  }
+
   @override
   void initState() {
     super.initState();
     fToast.init(context);
-    setState(
-      () => cargando = !cargando,
-    );
+    urlServidorController.text =
+        Provider.of<UrlProvider>(context, listen: false).url;
+    setState(() => cargando = true);
     try {
       getConfiguracion(context).then((value) {
+        if (!mounted) return;
         configuracion = value;
-        nitLaboratorioController.text = configuracion.nit!;
-        nombreLaboratorioController.text = configuracion.nombreLaboratorio!;
+        nitLaboratorioController.text = configuracion.nit ?? '';
+        nombreLaboratorioController.text =
+            configuracion.nombreLaboratorio ?? '';
         direccionLaboratorioController.text =
-            configuracion.direccionLaboratorio!;
+            configuracion.direccionLaboratorio ?? '';
         telefonosLaboratorioController.text =
-            configuracion.telefonosLaboratorio!;
-        correoLaboratorioController.text = configuracion.correoLaboratorio!;
-        webLaboratorioController.text = configuracion.webLaboratorio!;
+            configuracion.telefonosLaboratorio ?? '';
+        correoLaboratorioController.text =
+            configuracion.correoLaboratorio ?? '';
+        webLaboratorioController.text = configuracion.webLaboratorio ?? '';
         bacteriologoLaboratorioController.text =
-            configuracion.bacteriologoLaboratorio!;
-        tarjetaPLaboratorioController.text = configuracion.tarjetaPLaboratorio!;
-
+            configuracion.bacteriologoLaboratorio ?? '';
+        tarjetaPLaboratorioController.text =
+            configuracion.tarjetaPLaboratorio ?? '';
         urlFirmaLaboratorioController.text =
-            configuracion.urlFirmaLaboratorio!.substring(0, 180);
+            _cortar(configuracion.urlFirmaLaboratorio);
         urlLogoLaboratorioController.text =
-            configuracion.urlLogoLaboratorio!.substring(0, 180);
-        fimage.fileImgStr64 = configuracion.urlFirmaLaboratorio!;
-        fimageLogo.fileImgStr64 = configuracion.urlLogoLaboratorio!;
+            _cortar(configuracion.urlLogoLaboratorio);
+        fimage.fileImgStr64 = configuracion.urlFirmaLaboratorio ?? '';
+        fimageLogo.fileImgStr64 = configuracion.urlLogoLaboratorio ?? '';
 
-        setState(
-          () => cargando = !cargando,
-        );
+        setState(() => cargando = false);
       });
     } catch (e) {
       showToastB(fToast, 'Error obteniedndo la información de internet',
@@ -123,6 +134,7 @@ class _ConfiguracionState extends State<Configuracion> {
           gravity: ToastGravity.BOTTOM_RIGHT,
           icon: Icon(MdiIcons.alert));
       print('Error: $e');
+      if (mounted) setState(() => cargando = false);
     }
   }
 
@@ -130,250 +142,380 @@ class _ConfiguracionState extends State<Configuracion> {
     final ImagePicker picker = ImagePicker();
     final XFile? pickedImage =
         await picker.pickImage(source: ImageSource.gallery);
-    print(pickedImage?.path);
-    File xfile = File(pickedImage!.path);
+    if (pickedImage == null) return Fimage(File(''), '');
+    print(pickedImage.path);
+    File xfile = File(pickedImage.path);
     List<int> imageBytes = xfile.readAsBytesSync();
     String base64Image = base64Encode(imageBytes);
     Fimage fimage = Fimage(xfile, base64Image);
     return fimage;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.onInverseSurface,
-        title: const Text('Configuración'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 3.0),
-            child: IconButton(
-              onPressed: () {},
-              icon: const Icon(Icons.settings_applications,
-                  color: Colors.blueGrey),
-            ),
+  Future<void> _probarConexion() async {
+    setState(() {
+      probando = true;
+      conexionOk = null;
+    });
+    final UrlProvider urlProvider =
+        Provider.of<UrlProvider>(context, listen: false);
+    final String urlAnterior = urlProvider.url;
+    urlProvider.setUrl(urlServidorController.text);
+    final bool ok = await probarServidor(context);
+    if (!ok) {
+      urlProvider.setUrl(urlAnterior);
+    }
+    if (!mounted) return;
+    setState(() {
+      probando = false;
+      conexionOk = ok;
+    });
+  }
+
+  void _guardar() {
+    setState(() {
+      guardando = true;
+    });
+    configuracion.urlFirmaLaboratorio = fimage.fileImgStr64;
+    configuracion.urlLogoLaboratorio = fimageLogo.fileImgStr64;
+    guardarConfiguracion(context, configuracion).then(
+      (value) {
+        if (!mounted) return;
+        setState(() {
+          guardando = false;
+        });
+        showFloatingModalBottomSheet(
+          context: context,
+          builder: (context) => const ModalFit(
+            title: 'Configuración almacenada',
+            asset: 'images/logo.png',
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              onPressed: () {
-                setState(() {
-                  guardando = !guardando;
-                });
-                configuracion.urlFirmaLaboratorio = fimage.fileImgStr64;
-                configuracion.urlLogoLaboratorio = fimageLogo.fileImgStr64;
-                guardarConfiguracion(context, configuracion).then(
-                  (value) {
-                    showFloatingModalBottomSheet(
-                      context: context,
-                      builder: (context) => const ModalFit(
-                        title: 'Configuración almacenada',
-                        asset: 'images/logo.png',
-                      ),
-                    );
-                    setState(() {
-                      guardando = !guardando;
-                    });
-                  },
-                );
-              },
-              icon: const Icon(Icons.save),
+        );
+      },
+    );
+  }
+
+  Widget _campo(String label, TextEditingController controller,
+      {int minLines = 1, int maxLines = 1}) {
+    return TextFieldI(
+      labelText: label,
+      controller: controller,
+      colort: colort,
+      minLines: minLines,
+      maxLines: maxLines,
+    );
+  }
+
+  Widget _cargarImagen({
+    required String title,
+    required Fimage imagen,
+    required TextEditingController controller,
+    required VoidCallback onCargar,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: _campo(title, controller)),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: onCargar,
+              icon: const Icon(Icons.image_rounded, size: 18),
+              label: const Text('Cargar'),
+            ),
+          ],
+        ),
+        if (imagen.fileImgStr64 != '' && imagen.imageProvider != null) ...[
+          const SizedBox(height: 10),
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image(
+                image: imagen.imageProvider!,
+                height: 120,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
         ],
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Configuración',
+      actions: [
+        IconButton(
+          onPressed: guardando ? null : _guardar,
+          tooltip: 'Guardar configuración',
+          icon: guardando
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(Icons.save_rounded, color: scheme.primary),
+        ),
+      ],
+      body: LoadingOverlay(
+        visible: guardando,
+        message: 'Guardando configuración...',
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                onChanged: () {
+                  if (!cargando) {
+                    configuracion.nit = nitLaboratorioController.text;
+                    configuracion.nombreLaboratorio =
+                        nombreLaboratorioController.text;
+                    configuracion.direccionLaboratorio =
+                        direccionLaboratorioController.text;
+                    configuracion.telefonosLaboratorio =
+                        telefonosLaboratorioController.text;
+                    configuracion.correoLaboratorio =
+                        correoLaboratorioController.text;
+                    configuracion.webLaboratorio = webLaboratorioController.text;
+                    configuracion.bacteriologoLaboratorio =
+                        bacteriologoLaboratorioController.text;
+                    configuracion.tarjetaPLaboratorio =
+                        tarjetaPLaboratorioController.text;
+                    configuracion.urlFirmaLaboratorio =
+                        fimage.fileImgStr64;
+                    configuracion.urlLogoLaboratorio =
+                        fimageLogo.fileImgStr64;
+                  }
+                },
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final bool wide = constraints.maxWidth >= 900;
+                    final Widget serverCard = _cardServidor(scheme);
+                    final Widget datosCard = SectionCard(
+                      title: 'Datos del laboratorio',
+                      icon: Icons.apartment_rounded,
+                      child: Column(
+                        children: [
+                          _campo('Nit', nitLaboratorioController),
+                          const SizedBox(height: 12),
+                          _campo('Laboratorio', nombreLaboratorioController),
+                          const SizedBox(height: 12),
+                          _campo('Dirección Laboratorio',
+                              direccionLaboratorioController),
+                          const SizedBox(height: 12),
+                          _campo('Teléfonos Laboratorio',
+                              telefonosLaboratorioController),
+                          const SizedBox(height: 12),
+                          _campo('Correo Electrónico Laboratorio',
+                              correoLaboratorioController),
+                          const SizedBox(height: 12),
+                          _campo('Sitio Web Laboratorio',
+                              webLaboratorioController),
+                        ],
+                      ),
+                    );
+                    final Widget bacteriologoCard = SectionCard(
+                      title: 'Bacteriólogo',
+                      icon: Icons.science_rounded,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 7,
+                            child: _campo(
+                                'Bacteriólogo', bacteriologoLaboratorioController),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 3,
+                            child: _campo(
+                                'T.P.', tarjetaPLaboratorioController),
+                          ),
+                        ],
+                      ),
+                    );
+                    final Widget imagenesCard = SectionCard(
+                      title: 'Documentos e imágenes',
+                      icon: Icons.image_rounded,
+                      child: Column(
+                        children: [
+                          _cargarImagen(
+                            title: 'Firma Bacteriólogo (400x120)',
+                            imagen: fimage,
+                            controller: urlFirmaLaboratorioController,
+                            onCargar: () async {
+                              fimage = await _getFirmaImageFromGallery();
+                              imageFirma = fimage.fileImgStr64;
+                              urlFirmaLaboratorioController.text =
+                                  _cortar(imageFirma);
+                              setState(() {});
+                            },
+                          ),
+                          const SizedBox(height: 14),
+                          _cargarImagen(
+                            title: 'Logo Laboratorio (500x500)',
+                            imagen: fimageLogo,
+                            controller: urlLogoLaboratorioController,
+                            onCargar: () async {
+                              fimageLogo = await _getFirmaImageFromGallery();
+                              imageLogo = fimageLogo.fileImgStr64;
+                              urlLogoLaboratorioController.text =
+                                  _cortar(imageLogo);
+                              setState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                    final Widget guardar = ElevatedButton.icon(
+                      onPressed: guardando ? null : _guardar,
+                      icon: guardando
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_rounded),
+                      label: Text(guardando ? 'Guardando...' : 'Guardar'),
+                    );
+
+                    if (wide) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          serverCard,
+                          const SizedBox(height: 14),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: datosCard,
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                flex: 2,
+                                child: Column(
+                                  children: [
+                                    bacteriologoCard,
+                                    const SizedBox(height: 14),
+                                    imagenesCard,
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          guardar,
+                          const SizedBox(height: 24),
+                        ],
+                      );
+                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        serverCard,
+                        const SizedBox(height: 14),
+                        datosCard,
+                        const SizedBox(height: 14),
+                        bacteriologoCard,
+                        const SizedBox(height: 14),
+                        imagenesCard,
+                        const SizedBox(height: 16),
+                        guardar,
+                        const SizedBox(height: 24),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            if (cargando)
+              const Center(child: CircularProgressIndicator()),
+          ],
+        ),
       ),
-      body: Stack(children: [
-        SingleChildScrollView(
-          child: Form(
-            onChanged: () {
-              if (!cargando) {
-                configuracion.nit = nitLaboratorioController.text;
-                configuracion.nombreLaboratorio =
-                    nombreLaboratorioController.text;
-                configuracion.direccionLaboratorio =
-                    direccionLaboratorioController.text;
-                configuracion.telefonosLaboratorio =
-                    telefonosLaboratorioController.text;
-                configuracion.correoLaboratorio =
-                    correoLaboratorioController.text;
-                configuracion.webLaboratorio = webLaboratorioController.text;
-                configuracion.bacteriologoLaboratorio =
-                    bacteriologoLaboratorioController.text;
-                configuracion.tarjetaPLaboratorio =
-                    tarjetaPLaboratorioController.text;
-                configuracion.urlFirmaLaboratorio =
-                    urlFirmaLaboratorioController.text;
-                configuracion.urlLogoLaboratorio =
-                    urlLogoLaboratorioController.text;
-                configuracion.urlFirmaLaboratorio = fimage.fileImgStr64;
-                configuracion.urlLogoLaboratorio = fimageLogo.fileImgStr64;
-              }
-            },
-            child: Column(
-              children: [
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFieldI(
-                      labelText: 'Nit',
-                      controller: nitLaboratorioController,
-                      colort: colort,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFieldI(
-                      labelText: 'Laboratorio',
-                      controller: nombreLaboratorioController,
-                      colort: colort,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFieldI(
-                      labelText: 'Dirección Laboratorio',
-                      controller: direccionLaboratorioController,
-                      colort: colort,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFieldI(
-                      labelText: 'Telefonos Laboratorio',
-                      controller: telefonosLaboratorioController,
-                      colort: colort,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFieldI(
-                      labelText: 'Correo Electrónico Laboratorio',
-                      controller: correoLaboratorioController,
-                      colort: colort,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextFieldI(
-                      labelText: 'Sitio Web Laboratorio',
-                      controller: webLaboratorioController,
-                      colort: colort,
-                    ),
-                  ),
-                ),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 0.7 * MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextFieldI(
-                          labelText: 'Bacteriólogo',
-                          controller: bacteriologoLaboratorioController,
-                          colort: colort,
-                        ),
+    );
+  }
+
+  Widget _cardServidor(ColorScheme scheme) {
+    final Color colorConexion = conexionOk == null
+        ? scheme.onSurfaceVariant
+        : conexionOk!
+            ? Colors.green
+            : scheme.error;
+    return SectionCard(
+      title: 'Servidor',
+      icon: Icons.dns_rounded,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: urlServidorController,
+            keyboardType: TextInputType.url,
+            decoration: InputDecoration(
+              labelText: 'URL del servidor',
+              hintText: 'https://dominio.com/',
+              prefixIcon: const Icon(Icons.link_rounded),
+              suffixIcon: probando
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       ),
-                    ),
-                    SizedBox(
-                      width: 0.3 * MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextFieldI(
-                          labelText: 'T.P.',
-                          controller: tarjetaPLaboratorioController,
-                          colort: colort,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Stack(
-                  children: [
-                    SizedBox(
-                      width: 0.95 * MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextFieldI(
-                          labelText: 'Firma Bacteriólogo Laboratorio (400x120)',
-                          controller: urlFirmaLaboratorioController,
-                          colort: colort,
-                          minLines: 4,
-                          maxLines: 3,
-                        ),
-                      ),
-                    ),
-                    fimage.fileImgStr64 != ''
-                        ? Image(image: fimage.imageProvider!)
-                        : const SizedBox(),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          fimage = await _getFirmaImageFromGallery();
-                          imageFirma = fimage.fileImgStr64;
-                          urlFirmaLaboratorioController.text =
-                              imageFirma.substring(0, 180);
-                          print(fimage.fileImg.path);
-                          setState(() {});
-                        },
-                        child: const Text('Cargar firma'),
-                      ),
-                    ),
-                  ],
-                ),
-                Stack(
-                  children: [
-                    SizedBox(
-                      width: 0.95 * MediaQuery.of(context).size.width,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: TextFieldI(
-                          labelText: 'Logo Laboratorio (500x500)',
-                          controller: urlLogoLaboratorioController,
-                          colort: colort,
-                          minLines: 4,
-                        ),
-                      ),
-                    ),
-                    fimageLogo.fileImgStr64 != ''
-                        ? Image(image: fimageLogo.imageProvider!)
-                        : const SizedBox(),
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          fimageLogo = await _getFirmaImageFromGallery();
-                          imageLogo = fimageLogo.fileImgStr64;
-                          urlLogoLaboratorioController.text =
-                              imageLogo.substring(0, 180);
-                          print(fimageLogo.fileImg.path);
-                          setState(() {});
-                        },
-                        child: const Text('Cargar Logo'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    )
+                  : Icon(Icons.cloud_rounded, color: colorConexion),
             ),
           ),
-        ),
-        cargando
-            ? const Center(child: CircularProgressIndicator())
-            : const SizedBox()
-      ]),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: probando ? null : _probarConexion,
+                icon: const Icon(Icons.network_check_rounded, size: 18),
+                label: Text(probando ? 'Probando...' : 'Probar conexión'),
+              ),
+              if (conexionOk != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: colorConexion.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        conexionOk!
+                            ? Icons.check_circle_rounded
+                            : Icons.error_rounded,
+                        size: 14,
+                        color: colorConexion,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        conexionOk! ? 'Conectado' : 'Sin conexión',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colorConexion,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/models/parcial_orina.dart';
+import 'package:movavid/widgets/appbar/appbare.dart';
 import 'package:movavid/widgets/modals/floating_modal.dart';
 import 'package:movavid/widgets/modals/modal_fit.dart';
 
@@ -108,6 +109,7 @@ class _ParcialOrinaState extends State<ViewParcialOrina> {
   }
 
   Widget _buildTextField(String labelText, TextEditingController controller) {
+    final ColorScheme scheme = Theme.of(context).colorScheme;
     String value = controller.text;
     value = value != 'null' ? value : '';
     controller.text = value;
@@ -122,156 +124,56 @@ class _ParcialOrinaState extends State<ViewParcialOrina> {
       controller: controller,
       decoration: InputDecoration(
         labelText: labelText,
-        labelStyle: const TextStyle(
-          color: Colors.blueGrey,
-        ),
+        hintText: labelText,
       ),
-      style: const TextStyle(color: Colors.blue),
+      style: TextStyle(color: scheme.onSurface),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        title: const Text(
-          'Registro de Exámenes',
-          style: TextStyle(
-            fontSize: 14,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: !guardando_
-                ? IconButton(
-                    onPressed: () async {
-                      setState(() => guardando_ = !guardando_);
-                      guardarParcialOrina(
-                              context, parcialOrinaS, widget.codexamen)
-                          .then(
-                        (value) {
-                          if (true) {
-                            printPDFFile(
-                              context,
-                              "parcialOrina",
-                              "Parcial de Orina",
-                              "parcialOrina_${widget.paciente.identificacion}_${widget.fecha}.pdf",
-                              widget.paciente.identificacion!,
-                              widget.fecha,
-                              widget.paciente.nombreCompleto,
-                              widget.paciente.edad,
-                            );
-                          }
-                          setState(() => guardando_ = !guardando_);
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.print,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: !guardando_
-                ? IconButton(
-                    onPressed: () async {
-                      setState(() => guardando_ = !guardando_);
-                      guardarParcialOrina(
-                              context, parcialOrinaS, widget.codexamen)
-                          .then(
-                        (value) {
-                          showFloatingModalBottomSheet(
-                            context: context,
-                            builder: (context) => const ModalFit(
-                              title: 'Parcial de Orina almacenado',
-                              asset: 'images/porina.png',
-                            ),
-                          );
-                          setState(() => guardando_ = !guardando_);
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.save,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const CircleAvatar(
-                    backgroundImage: AssetImage('images/porina.png'),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Parcial de Orina',
-                        style: TextStyle(
-                          fontSize: 18,
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.paciente.nombreCompleto,
-                            style: const TextStyle(
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            widget.fecha,
-                            style: const TextStyle(
-                                fontSize: 10, color: Colors.blueGrey),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
-                ],
+    return ExamViewScaffold(
+      asset: 'images/porina.png',
+      examen: 'Parcial de Orina',
+      paciente: widget.paciente,
+      fecha: widget.fecha,
+      guardando: guardando_,
+      onPrint: () {
+        setState(() => guardando_ = !guardando_);
+        guardarParcialOrina(context, parcialOrinaS, widget.codexamen).then(
+          (value) {
+            if (true) {
+              printPDFFile(
+                context,
+                "parcialOrina",
+                "Parcial de Orina",
+                "parcialOrina_${widget.paciente.identificacion}_${widget.fecha}.pdf",
+                widget.paciente.identificacion!,
+                widget.fecha,
+                widget.paciente.nombreCompleto,
+                widget.paciente.edad,
+              );
+            }
+            setState(() => guardando_ = !guardando_);
+          },
+        );
+      },
+      onSave: () {
+        setState(() => guardando_ = !guardando_);
+        guardarParcialOrina(context, parcialOrinaS, widget.codexamen).then(
+          (value) {
+            showFloatingModalBottomSheet(
+              context: context,
+              builder: (context) => const ModalFit(
+                title: 'Parcial de Orina almacenado',
+                asset: 'images/porina.png',
               ),
-              Form(
+            );
+            setState(() => guardando_ = !guardando_);
+          },
+        );
+      },
+      body: Form(
                 autovalidateMode: AutovalidateMode.always,
                 onChanged: () {
                   parcialOrinaS.densidad = densidadController.text;
@@ -357,10 +259,6 @@ class _ParcialOrinaState extends State<ViewParcialOrina> {
                     ],
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

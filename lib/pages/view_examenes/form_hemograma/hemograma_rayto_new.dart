@@ -15,6 +15,8 @@ import 'package:provider/provider.dart';
 
 import '../../../widgets/modals/floating_modal.dart';
 import '../../../widgets/modals/modal_fit.dart';
+import '../../../widgets/exam_actions.dart';
+import '../../../widgets/patient_header.dart';
 
 class ViewHemogramaRaytoNew extends StatefulWidget {
   final HRayto hemograma;
@@ -61,11 +63,11 @@ class _ViewHemogramaRaytoNewState extends State<ViewHemogramaRaytoNew> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         title: const Text(
           'Registro de Exámenes',
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
           ),
         ),
         actions: [
@@ -107,151 +109,65 @@ class _ViewHemogramaRaytoNewState extends State<ViewHemogramaRaytoNew> {
                   )
                 : const CircularProgressIndicator(),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: !imprimiendo_
-                ? IconButton(
-                    tooltip: 'Imprimir pdf',
-                    onPressed: () async {
-                      setState(() {
-                        imprimiendo_ = !imprimiendo_;
-                      });
-                      guardarHemograma(
-                              context, hraytoProvider.hrayto, widget.codexamen)
-                          .then((value) async {
-                        setState(() {
-                          imprimiendo_ = !imprimiendo_;
-                        });
-                        printPDFFile(
-                          context,
-                          "hemogramaRayto",
-                          "Hemograma",
-                          "hemograma_${widget.paciente.identificacion}_${widget.fecha}.pdf",
-                          widget.paciente.identificacion!,
-                          widget.fecha,
-                          widget.paciente.nombreCompleto,
-                          widget.paciente.edad,
-                        );
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.print,
-                      color: Colors.blueGrey,
+          ExamActions(
+            busy: guardando_ || imprimiendo_,
+            onPrint: () async {
+              setState(() {
+                imprimiendo_ = !imprimiendo_;
+              });
+              guardarHemograma(
+                      context, hraytoProvider.hrayto, widget.codexamen)
+                  .then((value) async {
+                setState(() {
+                  imprimiendo_ = !imprimiendo_;
+                });
+                printPDFFile(
+                  context,
+                  "hemogramaRayto",
+                  "Hemograma",
+                  "hemograma_${widget.paciente.identificacion}_${widget.fecha}.pdf",
+                  widget.paciente.identificacion!,
+                  widget.fecha,
+                  widget.paciente.nombreCompleto,
+                  widget.paciente.edad,
+                );
+              });
+            },
+            onSave: () async {
+              setState(() => guardando_ = !guardando_);
+              guardarHemograma(
+                      context, hraytoProvider.hrayto, widget.codexamen)
+                  .then(
+                (value) {
+                  showFloatingModalBottomSheet(
+                    context: context,
+                    builder: (context) => const ModalFit(
+                      title: 'Hemograma almacenado',
+                      asset: 'images/hemat.png',
                     ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.lime,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: !guardando_
-                ? IconButton(
-                    tooltip: 'Guardar',
-                    onPressed: () async {
-                      setState(() => guardando_ = !guardando_);
-                      guardarHemograma(
-                              context, hraytoProvider.hrayto, widget.codexamen)
-                          .then(
-                        (value) {
-                          showFloatingModalBottomSheet(
-                            context: context,
-                            builder: (context) => const ModalFit(
-                              title: 'Hemograma almacenado',
-                              asset: 'images/hemat.png',
-                            ),
-                          );
-                          setState(() => guardando_ = !guardando_);
-                        },
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.save,
-                      color: Colors.green,
-                    ),
-                  )
-                : const Padding(
-                    padding: EdgeInsets.only(left: 16, right: 16),
-                    child: SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                    ),
-                  ),
+                  );
+                  setState(() => guardando_ = !guardando_);
+                },
+              );
+            },
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const CircleAvatar(
-                    backgroundImage: AssetImage('images/hemat.png'),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Hemograma',
-                        style: TextStyle(
-                          color: Colors.brown,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.paciente.nombreCompleto,
-                            style: const TextStyle(
-                              color: Colors.brown,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            widget.fecha,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              FormHemogramaNew(
+      body: Column(
+        children: [
+          PatientHeader(
+            asset: 'images/hemat.png',
+            examen: 'Hemograma',
+            paciente: widget.paciente.nombreCompleto,
+            fecha: widget.fecha,
+          ),
+          FormHemogramaNew(
                 hemograma: hraytoLan,
                 identificacion: widget.paciente.identificacion!,
                 fecha: widget.fecha,
               ),
             ],
           ),
-        ),
-      ),
     );
   }
 }

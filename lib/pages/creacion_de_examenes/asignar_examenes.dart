@@ -8,6 +8,9 @@ import 'package:movavid/models/paciente.dart';
 import 'package:movavid/models/procedimientos_model.dart';
 import 'package:movavid/pages/configuracion/procedimientos.dart';
 import 'package:movavid/pages/creacion_de_examenes/mostrar_seleccionados.dart';
+import 'package:movavid/widgets/app_page.dart';
+import 'package:movavid/widgets/empty_state.dart';
+import 'package:movavid/widgets/search_field.dart';
 
 class AsignarExamenes extends StatefulWidget {
   final Paciente paciente;
@@ -26,7 +29,6 @@ class AsignarExamenes extends StatefulWidget {
 }
 
 class _AsignarExamenesState extends State<AsignarExamenes> {
-  List<bool> _isCheckedList = [];
   late List<Procedimientos> procedimientoss;
   final TextEditingController busquedaController = TextEditingController();
   List<Procedimientos> seleccionados = [];
@@ -37,20 +39,12 @@ class _AsignarExamenesState extends State<AsignarExamenes> {
   void initState() {
     super.initState();
     fToast.init(context);
-    print({widget.checkeds});
-    if ((widget.checkeds == null)) {
-      _isCheckedList = List<bool>.filled(widget.procedimientos.length, false);
-    } else {
-      if (widget.checkeds!.isNotEmpty) {
-        _isCheckedList = widget.checkeds!;
-      }
-    }
     procedimientoss = widget.procedimientos;
     getSeleccionados(context, widget.paciente.identificacion!, widget.fecha)
         .then(
       (value) {
         seleccionados = value;
-        setState(() {});
+        if (mounted) setState(() {});
       },
     );
   }
@@ -63,200 +57,231 @@ class _AsignarExamenesState extends State<AsignarExamenes> {
         : false;
   }
 
+  void _abrirEditar(int indexx) {
+    setState(() {
+      seleccionadox = indexx;
+      editando = !editando;
+    });
+    getProcedimiento(context, procedimientoss[indexx].codigo!).then(
+      (Procedimientos value) {
+        if (!mounted) return;
+        setState(() {
+          editando = !editando;
+          seleccionadox = -1;
+        });
+        Procedimientos procedimiento = value;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  ProcedimientosPage(procedimiento: procedimiento)),
+        );
+      },
+    );
+  }
+
+  void _toggleSeleccion(int indexx) {
+    Procedimientos proc = procedimientoss[indexx];
+    if (!siselect(proc.nombre!)) {
+      seleccionados.add(proc);
+    } else {
+      int indice = seleccionados.indexWhere(
+          (Procedimientos element) => element.nombre == proc.nombre);
+      if (indice >= 0) {
+        seleccionados.removeAt(indice);
+      }
+    }
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Seleccione los Exámenes',
-          style: TextStyle(fontSize: 14),
-        ),
-        backgroundColor: Colors.red.shade100,
-        foregroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context, _isCheckedList),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: IconButton(
-              icon: const Icon(Icons.remove_red_eye),
-              onPressed: () async {
-                List<Procedimientos> result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MostrarSeleccionados(
-                      paciente: widget.paciente,
-                      fecha: widget.fecha,
-                      seleccionados: seleccionados,
-                      aguardar: false,
-                    ),
-                  ),
-                );
-                seleccionados = result;
-                setState(() {});
-              },
-            ),
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Seleccione los Exámenes',
+      titleWidget: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Seleccione los Exámenes',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 20.0),
-            child: IconButton(
-              icon: const Icon(Icons.done),
-              onPressed: () async {
-                if (seleccionados.isNotEmpty) {
-                  var result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MostrarSeleccionados(
-                        paciente: widget.paciente,
-                        fecha: widget.fecha,
-                        seleccionados: seleccionados,
-                        aguardar: true,
-                      ),
-                    ),
-                  );
-                  if (result == 'home') {
-                    if (mounted) {
-                      // ignore: use_build_context_synchronously
-                      Navigator.pop(context, 'home');
-                    }
-                  }
-                } else {
-                  showToastB(
-                    fToast,
-                    'No ha seleccionado ningún examen',
-                    bacgroundColor: Colors.red,
-                    frontColor: Colors.yellow,
-                    milliseconds: 10,
-                    icon: const Icon(
-                      Icons.error,
-                      color: Colors.yellow,
-                    ),
-                  );
-                }
-              },
+          Text(
+            '${widget.paciente.nombreCompleto} • ${seleccionados.length} seleccionados',
+            style: TextStyle(
+              fontSize: 11,
+              color: scheme.onSurfaceVariant,
             ),
           ),
         ],
       ),
-      body: ListView.builder(
-          itemCount: procedimientoss.length + 2,
-          itemBuilder: (context, index) {
-            if (index == 0) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  onChanged: (value) {
-                    busqueda(value);
-                  },
-                  controller: busquedaController,
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    labelText: 'Busqueda de Examenes',
-                    suffixIcon: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: IconButton(
-                        onPressed: () {
-                          busquedaController.clear();
-                          busqueda('');
-                        },
-                        icon: const Icon(Icons.clear),
-                      ),
-                    ),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.visibility_rounded, color: scheme.primary),
+          tooltip: 'Ver seleccionados',
+          onPressed: () async {
+            List<Procedimientos> result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MostrarSeleccionados(
+                  paciente: widget.paciente,
+                  fecha: widget.fecha,
+                  seleccionados: seleccionados,
+                  aguardar: false,
+                ),
+              ),
+            );
+            seleccionados = result;
+            if (mounted) setState(() {});
+          },
+        ),
+        IconButton(
+          icon: Icon(Icons.check_rounded, color: scheme.primary),
+          tooltip: 'Finalizar selección',
+          onPressed: () async {
+            if (seleccionados.isNotEmpty) {
+              var result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MostrarSeleccionados(
+                    paciente: widget.paciente,
+                    fecha: widget.fecha,
+                    seleccionados: seleccionados,
+                    aguardar: true,
                   ),
                 ),
               );
-            } else if (index == 1) {
-              return const SizedBox();
+              if (result == 'home' && mounted) {
+                Navigator.pop(context, 'home');
+              }
             } else {
-              int indexx = index - 2;
-              String nombreExamen = procedimientoss[indexx].nombre!;
-              String codigoExamen = procedimientoss[indexx].codigo!;
-              bool seleccionado = siselect(nombreExamen);
-              MaterialStateProperty<Color> bgColorn =
-                  MaterialStateProperty.resolveWith(
-                      (states) => const Color.fromARGB(255, 78, 39, 78));
-              MaterialStateProperty<Color> bgColors =
-                  MaterialStateProperty.resolveWith(
-                      (states) => const Color.fromARGB(255, 255, 188, 255));
-              MaterialStateProperty<Color> bgColor =
-                  seleccionado ? bgColors : bgColorn;
-              return Card(
-                color: _isCheckedList[indexx]
-                    ? Colors.amber.shade50
-                    : Colors.white,
-                child: ListTile(
-                  title: Text(
-                    nombreExamen,
-                    style: const TextStyle(fontStyle: FontStyle.italic),
-                  ),
-                  leading: !editando && seleccionadox == -1
-                      ? IconButton(
-                          onPressed: () {
-                            setState(() {
-                              seleccionadox = indexx;
-                              editando = !editando;
-                            });
-                            getProcedimiento(context, codigoExamen).then(
-                              (Procedimientos value) {
-                                setState(() {
-                                  editando = !editando;
-                                  seleccionadox = -1;
-                                });
-                                Procedimientos procedimiento = value;
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => ProcedimientosPage(
-                                          procedimiento: procedimiento)),
-                                );
-                              },
-                            );
-                          },
-                          icon: const Icon(Icons.settings_applications_rounded),
-                        )
-                      : indexx == seleccionadox
-                          ? const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  color: Colors.blue,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                            )
-                          : const Icon(Icons.settings_applications_rounded),
-                  trailing: ElevatedButton(
-                    style: ButtonStyle(
-                      foregroundColor: MaterialStateProperty.resolveWith(
-                          (states) => const Color.fromARGB(255, 229, 255, 136)),
-                      backgroundColor: bgColor,
-                    ),
-                    onPressed: () {
-                      print(seleccionado);
-                      if (!seleccionado) {
-                        seleccionados.add(procedimientoss[indexx]);
-                      } else {
-                        int indice = seleccionados.indexWhere(
-                            (Procedimientos element) =>
-                                element.nombre == nombreExamen);
-                        if (indice >= 0) {
-                          seleccionados.removeAt(indice);
-                        }
-                      }
-                      setState(() {});
-                    },
-                    child: !seleccionado
-                        ? const Icon(Icons.add)
-                        : const Icon(Icons.check),
-                  ),
+              showToastB(
+                fToast,
+                'No ha seleccionado ningún examen',
+                bacgroundColor: Colors.red,
+                frontColor: Colors.yellow,
+                milliseconds: 10,
+                icon: const Icon(
+                  Icons.error,
+                  color: Colors.yellow,
                 ),
               );
             }
-          }),
+          },
+        ),
+      ],
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: SearchField(
+              controller: busquedaController,
+              onChanged: (value) => busqueda(value),
+              hint: 'Buscar exámenes...',
+              label: 'Búsqueda de Exámenes',
+            ),
+          ),
+          Expanded(
+            child: procedimientoss.isEmpty
+                ? EmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: 'Sin resultados',
+                    subtitle: 'No hay exámenes que coincidan con la búsqueda.',
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: procedimientoss.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      int indexx = index;
+                      final String nombreExamen =
+                          procedimientoss[indexx].nombre!;
+                      final String codigoExamen =
+                          procedimientoss[indexx].codigo!;
+                      final bool seleccionado = siselect(nombreExamen);
+                      return Card(
+                        color: seleccionado
+                            ? scheme.primaryContainer.withValues(alpha: 0.4)
+                            : null,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            radius: 18,
+                            backgroundColor: seleccionado
+                                ? scheme.primary
+                                : scheme.surfaceContainerHighest,
+                            child: Icon(
+                              seleccionado
+                                  ? Icons.check_rounded
+                                  : Icons.biotech_rounded,
+                              size: 20,
+                              color: seleccionado
+                                  ? scheme.onPrimary
+                                  : scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          title: Text(
+                            nombreExamen,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Código: $codigoExamen',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                onPressed: () => _abrirEditar(indexx),
+                                tooltip: 'Editar examen',
+                                icon: editando && indexx == seleccionadox
+                                    ? const SizedBox(
+                                        width: 15,
+                                        height: 15,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.settings_rounded,
+                                        size: 20,
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                              ),
+                              IconButton.filled(
+                                onPressed: () => _toggleSeleccion(indexx),
+                                tooltip: seleccionado
+                                    ? 'Quitar'
+                                    : 'Seleccionar',
+                                style: IconButton.styleFrom(
+                                  backgroundColor: seleccionado
+                                      ? scheme.primary
+                                      : scheme.surfaceContainerHighest,
+                                  foregroundColor: seleccionado
+                                      ? scheme.onPrimary
+                                      : scheme.onSurfaceVariant,
+                                ),
+                                icon: Icon(
+                                  seleccionado
+                                      ? Icons.check_rounded
+                                      : Icons.add_rounded,
+                                  size: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 

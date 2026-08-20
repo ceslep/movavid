@@ -2,22 +2,27 @@
 
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:movavid/pages/home_laboratorio.dart';
 import 'package:movavid/providers/hrayto_provider.dart';
 import 'package:movavid/providers/url_provider.dart';
+import 'package:movavid/theme/app_theme.dart';
+import 'package:movavid/widgets/connection_banner.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:desktop_window/desktop_window.dart';
 
 const String titleApp = 'Laboratorio';
-const Color colorTheme = Color.fromARGB(255, 34, 170, 140);
-void main() {
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final UrlProvider urlProvider = UrlProvider();
+  await urlProvider.load();
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => UrlProvider()),
+        ChangeNotifierProvider.value(value: urlProvider),
         ChangeNotifierProvider(create: (context) => HRaytoProvider()),
       ],
       child: const MyApp(),
@@ -36,8 +41,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    if (Platform.isWindows) {
-      DesktopWindow.setWindowSize(const Size(600, 900));
+    if (!kIsWeb && Platform.isWindows) {
+      DesktopWindow.setWindowSize(const Size(1280, 800));
+      DesktopWindow.setMinWindowSize(const Size(960, 640));
     }
   }
 
@@ -46,9 +52,13 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: titleApp,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: colorTheme),
-        useMaterial3: true,
+      theme: buildLightTheme(),
+      themeMode: ThemeMode.light,
+      builder: (context, child) => Column(
+        children: [
+          const ConnectionBanner(),
+          Expanded(child: child ?? const SizedBox.shrink()),
+        ],
       ),
       home: const Homemovavid(
         title: titleApp,

@@ -26,6 +26,35 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+final ValueNotifier<bool> serverDown = ValueNotifier<bool>(false);
+
+Future<http.Response> conRequest(Future<http.Response> Function() fn) async {
+  try {
+    final http.Response r = await fn();
+    serverDown.value = r.statusCode >= 500;
+    return r;
+  } catch (e) {
+    serverDown.value = true;
+    rethrow;
+  }
+}
+
+Future<bool> probarServidor(BuildContext context) async {
+  final urlProvider = Provider.of<UrlProvider>(context, listen: false);
+  try {
+    final http.Response response = await conRequest(
+      () => http
+          .get(Uri.parse('${urlProvider.url}getProcedimientos.php'))
+          .timeout(const Duration(seconds: 8)),
+    );
+    serverDown.value = response.statusCode != 200;
+    return response.statusCode == 200;
+  } catch (e) {
+    serverDown.value = true;
+    return false;
+  }
+}
+
 Future<Paciente> getInfoPaciente(
   BuildContext context, {
   String identificacion = '',
@@ -36,7 +65,7 @@ Future<Paciente> getInfoPaciente(
     'identificacion': identificacion,
   });
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosPaciente = json.decode(decodedResponse);
@@ -58,8 +87,8 @@ Future<List<Paciente>?> getPacientes(BuildContext context,
   final String bodyData = json.encode({"criterio": criterio});
   try {
     response = criterio == ''
-        ? await http.get(url)
-        : await http.post(url, body: bodyData);
+        ? await conRequest(() => http.get(url))
+        : await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       List<dynamic> datosPaciente = json.decode(response.body);
       List<Paciente> result =
@@ -83,8 +112,8 @@ Future<List<Examenes>?> examenesPaciente(BuildContext context, FToast fToast,
   final String bodyData = json.encode({"criterio": criterio});
   try {
     response = criterio == ''
-        ? await http.get(url)
-        : await http.post(url, body: bodyData);
+        ? await conRequest(() => http.get(url))
+        : await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       List<dynamic> datosPaciente = json.decode(response.body);
       List<Examenes> result =
@@ -110,7 +139,7 @@ Future<List<Examenes>?> examenesPacienteFecha(
   final String bodyData =
       json.encode({"identificacion": identificacion, "fecha": fecha});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       List<dynamic> datosPaciente = json.decode(response.body);
       List<Examenes> result =
@@ -134,7 +163,7 @@ Future<HemogramaRayto> getHemogramaRayto(BuildContext context,
   final String bodyData =
       json.encode({'identificacion': identificacion, 'fecha': fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosHemograma = json.decode(decodedResponse);
@@ -157,7 +186,7 @@ Future<HRayto> getHemogramaRaytoNew(BuildContext context,
   final String bodyData =
       json.encode({'identificacion': identificacion, 'fecha': fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosHemograma = json.decode(decodedResponse);
@@ -178,7 +207,7 @@ Future<ParcialOrina> getParcialOrina(BuildContext context,
   final String bodyData =
       json.encode({'identificacion': identificacion, 'fecha': fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosParcialOrina = json.decode(decodedResponse);
@@ -199,7 +228,7 @@ Future<Coprologico> getCoprologico(BuildContext context,
   final String bodyData =
       json.encode({'identificacion': identificacion, 'fecha': fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosCoprologico = json.decode(decodedResponse);
@@ -223,7 +252,7 @@ Future<void> guardarHemograma(
   final String bodyData =
       json.encode({...hrayto.toJson(), "tabla": "hemogramaRayto"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datos = json.decode(decodedResponse);
@@ -246,7 +275,7 @@ Future<void> guardarParcialOrina(
   final String bodyData =
       json.encode({...parcialOrina.toJson(), "tabla": "parcialOrina"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       await updateExamen(urlProvider.url, codexamen,
           parcialOrina.identificacion!, parcialOrina.fecha!);
@@ -266,7 +295,7 @@ Future<void> guardarCoprologico(
   final String bodyData =
       json.encode({...coprologico.toJson(), "tabla": "coprologico"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       await updateExamen(urlProvider.url, codexamen,
           coprologico.identificacion!, coprologico.fecha!);
@@ -321,7 +350,7 @@ Future<bool> guardarConfiguracion(
   final String bodyData = configuracionToJson(configuracion);
   late final http.Response response;
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     return response.statusCode == 200;
   } catch (e) {
     print('Error al enviar los datos del hemograma: $e');
@@ -334,7 +363,7 @@ Future<ConfiguracionModel> getConfiguracion(BuildContext context) async {
   final Uri url = Uri.parse('${urlProvider.url}getConfiguracion.php');
   late final http.Response response;
   try {
-    response = await http.get(url);
+    response = await conRequest(() => http.get(url));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosConfiguracion = json.decode(decodedResponse);
@@ -363,7 +392,7 @@ Future<ExamenTipo1> getTipo1(BuildContext context,
   });
   late final http.Response response;
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosExamen = json.decode(decodedResponse);
@@ -392,7 +421,7 @@ Future<ExamenTipo2> getTipo2(BuildContext context,
   });
   late final http.Response response;
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosExamen = json.decode(decodedResponse);
@@ -416,7 +445,7 @@ Future<void> guardarTipo1(
   final String bodyData =
       json.encode({...examen.toJson(), "tabla": "examen_tipo_1"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       await updateExamen(
           urlProvider.url, codexamen, examen.identificacion!, examen.fecha!);
@@ -436,7 +465,7 @@ Future<void> guardarTipo2(
   final String bodyData =
       json.encode({...examen.toJson(), "tabla": "examen_tipo_2"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       await updateExamen(
           urlProvider.url, codexamen, examen.identificacion!, examen.fecha!);
@@ -454,7 +483,7 @@ Future<UniConst> getUniConst(BuildContext context, String examen) async {
   late final http.Response response;
   final String bodyData = json.encode({"codexamen": examen});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosUC = json.decode(decodedResponse);
@@ -475,7 +504,7 @@ Future<FrotisVaginal> getFrotisVaginal(BuildContext context,
   final String bodyData =
       json.encode({'identificacion': identificacion, 'fecha': fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosFrotis = json.decode(decodedResponse);
@@ -499,7 +528,7 @@ Future<void> guardarFrotisVaginal(
   final String bodyData =
       json.encode({...frotisVaginal.toJson(), "tabla": "frotisVaginal"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       await updateExamen(urlProvider.url, codexamen,
           frotisVaginal.identificacion!, frotisVaginal.fecha!);
@@ -518,7 +547,7 @@ Future<PerfilLipidico> getPerfilLipidico(BuildContext context,
   final String bodyData =
       json.encode({'identificacion': identificacion, 'fecha': fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       final decodedResponse = utf8.decode(response.bodyBytes);
       final dynamic datosPerfil = json.decode(decodedResponse);
@@ -542,7 +571,7 @@ Future<void> guardarPerfilLipidico(BuildContext context,
   final String bodyData =
       json.encode({...perfilLipidico.toJson(), "tabla": "perfilLipidico"});
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       await updateExamen(urlProvider.url, codexamen,
           perfilLipidico.identificacion!, perfilLipidico.fecha!);
@@ -562,7 +591,7 @@ Future<List<Procedimientos>> getProcedimientos(
   Uri url = Uri.parse('${urlProvider.url}getProcedimientos.php');
 
   try {
-    final response = await http.get(url);
+    final response = await conRequest(() => http.get(url));
     if (response.statusCode == 200) {
       procedimientos = jsonDecode(response.body).cast<Map<String, dynamic>>();
       return procedimientos.map((e) => Procedimientos.fromJson(e)).toList();
@@ -581,7 +610,7 @@ Future<Procedimientos> getProcedimiento(
   final String bodyData = json.encode({"codigo": codigo});
 
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       procedimiento = jsonDecode(response.body);
       return Procedimientos.fromJson(procedimiento);
@@ -600,7 +629,7 @@ Future<void> guardarProcedimiento(
   final String bodyData = json.encode(procedimiento.toJson());
 
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {}
   } catch (e) {
     print(e);
@@ -632,7 +661,7 @@ Future<void> guardarExamenes(
   });
 
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       print("bien");
     } else {
@@ -651,7 +680,7 @@ Future<List<Procedimientos>> getSeleccionados(
   final String bodyData =
       json.encode({"identificacion": identificacion, "fecha": fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       procedimientos = jsonDecode(response.body).cast<Map<String, dynamic>>();
       return procedimientos.map((e) => Procedimientos.fromJson(e)).toList();
@@ -672,7 +701,7 @@ Future<void> updateExamen(
     "fecha": fecha,
   });
   try {
-    response = await http.post(url, body: bodyData);
+    response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       print("bien");
     } else {
@@ -690,7 +719,7 @@ Future<List<Paciente>> getPacientesFecha(
   Uri url = Uri.parse('${urlProvider.url}getPacientesFecha.php');
   final String bodyData = json.encode({"fecha": fecha});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       pacientes = jsonDecode(response.body).cast<Map<String, dynamic>>();
       return pacientes.map((e) => Paciente.fromJson(e)).toList();
@@ -748,7 +777,7 @@ Future<List<String>> getItemsExamen(
   Uri url = Uri.parse('${urlProvider.url}getItemsExamenes.php');
   final String bodyData = json.encode({"codexamen": codexamen, "campo": campo});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       dynamic data = jsonDecode(response.body);
       for (var element in data) {
@@ -770,7 +799,7 @@ Future<bool> guardarItemsExamen(
   final String bodyData =
       json.encode({"codexamen": codexamen, "campo": campo, "items": items});
   try {
-    final response = await http.post(url, body: bodyData);
+    final response = await conRequest(() => http.post(url, body: bodyData));
     if (response.statusCode == 200) {
       return true;
     }
@@ -787,7 +816,7 @@ Future<List<CodExamen>> getExamenesWithItems(BuildContext context) async {
   final urlProvider = Provider.of<UrlProvider>(context, listen: false);
   Uri url = Uri.parse('${urlProvider.url}getExamenesWithItems.php');
   try {
-    final response = await http.get(url);
+    final response = await conRequest(() => http.get(url));
     if (response.statusCode == 200) {
       examenes = jsonDecode(response.body).cast<Map<String, dynamic>>();
       return examenes.map((e) => CodExamen.fromJson(e)).toList();

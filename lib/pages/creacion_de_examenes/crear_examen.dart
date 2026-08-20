@@ -6,7 +6,9 @@ import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/models/procedimientos_model.dart';
 import 'package:movavid/pages/creacion_de_examenes/asignar_examenes.dart';
+import 'package:movavid/widgets/app_page.dart';
 import 'package:movavid/widgets/date_picker.dart';
+import 'package:movavid/widgets/section_card.dart';
 
 class CrearExamen extends StatefulWidget {
   const CrearExamen({
@@ -38,175 +40,181 @@ class _CrearExamenState extends State<CrearExamen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.secondary,
-        foregroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Crear Exámenes'),
-      ),
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Crear Exámenes',
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+            SectionCard(
+              title: 'Fecha de los exámenes',
+              icon: Icons.event_rounded,
               child: buildDatePicker(
                 context,
                 _fechaController,
                 'Fecha de Exámenes',
               ),
             ),
-            Row(
-              children: [
-                SizedBox(
-                  width: 0.8 * MediaQuery.of(context).size.width,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Form(
-                      child: Focus(
-                        onKeyEvent: (node, event) {
-                          if (event.logicalKey.keyLabel == 'Enter') {
-                            getInfoPac(context);
+            const SizedBox(height: 14),
+            SectionCard(
+              title: 'Paciente',
+              icon: Icons.person_search_rounded,
+              child: Column(
+                children: [
+                  Form(
+                    child: Focus(
+                      onKeyEvent: (node, event) {
+                        if (event.logicalKey.keyLabel == 'Enter') {
+                          getInfoPac(context);
+                        }
+                        return KeyEventResult.ignored;
+                      },
+                      child: TextFormField(
+                        onChanged: (value) {
+                          if (value.length < 3) {
+                            setState(() => paciente = Paciente());
                           }
-                          return KeyEventResult.ignored;
                         },
-                        child: TextFormField(
-                          onChanged: (value) {
-                            if (value.length < 3) {
-                              setState(() => paciente = Paciente());
-                            }
-                          },
-                          autofocus: true,
-                          controller: _identificacionController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Paciente',
-                            hintText: 'Identificación del paciente',
-                            suffixIcon: IconButton(
-                              onPressed: () {
-                                _identificacionController.clear();
-                              },
-                              icon: const Icon(Icons.clear),
-                            ),
-                          ),
+                        autofocus: true,
+                        controller: _identificacionController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Paciente',
+                          hintText: 'Identificación del paciente',
+                          prefixIcon: Icon(Icons.badge_rounded),
                         ),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  width: 0.1 * MediaQuery.of(context).size.width,
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(0.0),
-                      ),
-                      onPressed: () async {
-                        await getInfoPac(context);
-                      },
-                      child: !buscando
-                          ? const Icon(Icons.search)
-                          : const SizedBox(
-                              width: 10,
-                              height: 10,
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: buscando
+                          ? null
+                          : () async {
+                              await getInfoPac(context);
+                            },
+                      icon: buscando
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                               ),
-                            ),
+                            )
+                          : const Icon(Icons.search_rounded),
+                      label: Text(buscando ? 'Buscando...' : 'Buscar'),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: Card(
-                child: paciente.nombres != null
-                    ? ListTile(
-                        title: Text(
-                          '${paciente.nombres} ${paciente.apellidos}',
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Text(paciente.edad),
-                            Text(paciente.genero!),
-                            Text('Fecha:${_fechaController.text}'),
-                            const SizedBox(height: 10),
-                            Center(
-                              child: ElevatedButton(
-                                style: ButtonStyle(
-                                  foregroundColor:
-                                      MaterialStateProperty.resolveWith(
-                                          (states) => const Color.fromARGB(
-                                              255, 255, 255, 255)),
-                                  backgroundColor:
-                                      MaterialStateProperty.resolveWith(
-                                          (states) => const Color.fromARGB(
-                                              255, 78, 39, 78)),
+            if (paciente.nombres != null) ...[
+              const SizedBox(height: 14),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundImage: AssetImage(
+                              paciente.genero == 'Masculino'
+                                  ? 'images/male.png'
+                                  : 'images/female.png',
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${paciente.nombres} ${paciente.apellidos}',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                                 ),
-                                onPressed: () async {
+                                Text(
+                                  '${paciente.edad} • ${paciente.genero}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                Text(
+                                  'Fecha: ${_fechaController.text}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: cargandoProcedimientos
+                              ? null
+                              : () async {
                                   setState(() {
-                                    cargandoProcedimientos =
-                                        !cargandoProcedimientos;
+                                    cargandoProcedimientos = true;
                                   });
                                   getProcedimientos(context).then(
                                     (value) async {
+                                      if (!mounted) return;
                                       setState(() {
-                                        cargandoProcedimientos =
-                                            !cargandoProcedimientos;
+                                        cargandoProcedimientos = false;
                                       });
                                       List<Procedimientos> procedimientos =
                                           value;
                                       var result = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => AsignarExamenes(
+                                          builder: (context) =>
+                                              AsignarExamenes(
                                             paciente: paciente,
                                             fecha: _fechaController.text,
                                             procedimientos: procedimientos,
                                           ),
                                         ),
                                       );
-                                      if (result == 'home') {
-                                        if (mounted) {
-                                          // ignore: use_build_context_synchronously
-                                          Navigator.pop(context, 'home');
-                                        }
+                                      if (result == 'home' && mounted) {
+                                        Navigator.pop(context, 'home');
                                       }
                                     },
                                   );
                                 },
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Text(
-                                      "Asignar Exámenes",
-                                    ),
-                                    const SizedBox(width: 10),
-                                    SizedBox(
-                                      width: 15,
-                                      height: 15,
-                                      child: cargandoProcedimientos
-                                          ? const CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                            )
-                                          : const SizedBox(),
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                          icon: cargandoProcedimientos
+                              ? const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.assignment_add),
+                          label: Text(cargandoProcedimientos
+                              ? 'Cargando...'
+                              : 'Asignar Exámenes'),
                         ),
-                      )
-                    : const SizedBox(),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            )
+            ],
           ],
         ),
       ),
@@ -214,9 +222,9 @@ class _CrearExamenState extends State<CrearExamen> {
   }
 
   Future<void> getInfoPac(BuildContext context) async {
-    setState(() => buscando = !buscando);
+    setState(() => buscando = true);
     paciente = await getInfoPaciente(context,
         identificacion: _identificacionController.text);
-    setState(() => buscando = !buscando);
+    if (mounted) setState(() => buscando = false);
   }
 }

@@ -11,7 +11,9 @@ import 'package:movavid/api/api_laboratorio.dart';
 import 'package:movavid/functions/show_toast.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/providers/url_provider.dart';
+import 'package:movavid/widgets/app_page.dart';
 import 'package:movavid/widgets/date_picker.dart';
+import 'package:movavid/widgets/section_card.dart';
 import 'package:movavid/widgets/text_fieldi.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:provider/provider.dart';
@@ -87,7 +89,6 @@ class _PacientesState extends State<Pacientes> {
         Paciente paciente = await getInfoPaciente(context,
             identificacion: _identificacionController.text);
 
-        //    print(paciente.toJson());
         if (paciente.identificacion != null) {
           id = '';
           if (paciente.identificacion != 'Error') {
@@ -144,7 +145,7 @@ class _PacientesState extends State<Pacientes> {
     Uri url = Uri.parse('${urlProvider.url}savePaciente.php');
     final bodyData = json.encode(paciente.toJson());
     try {
-      final response = await http.post(url, body: bodyData);
+      final response = await conRequest(() => http.post(url, body: bodyData));
       if (response.statusCode == 200) {
         final dynamic datos = json.decode(response.body);
         return datos['msg'];
@@ -156,80 +157,60 @@ class _PacientesState extends State<Pacientes> {
     }
   }
 
+  void _limpiarFormulario() {
+    _identificacionController.clear();
+    _nombresController.clear();
+    _apellidosController.clear();
+    _fecnacController.clear();
+    _genero = '';
+    _telefonoController.clear();
+    _correoController.clear();
+    _entidadController.clear();
+    identificaCount = 0;
+    _nombresfieldiCount = 0;
+    _apellidosFieldiCount = 0;
+    _telefonofieldiCount = 0;
+    _correofieldiCount = 0;
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: const Text(
-          'Crear Paciente',
-          style: TextStyle(
-            color: Colors.white,
-          ),
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: id == '' ? 'Nuevo Paciente' : 'Editar Paciente',
+      actions: [
+        IconButton(
+          onPressed: _limpiarFormulario,
+          tooltip: 'Nuevo formulario',
+          icon: const Icon(Icons.new_label_rounded),
         ),
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
+        IconButton(
+          onPressed: _confirmarGuardar,
+          tooltip: 'Guardar',
+          icon: guardando
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(Icons.save_rounded, color: scheme.primary),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {
-              _identificacionController.clear();
-              _nombresController.clear();
-              _apellidosController.clear();
-              _fecnacController.clear();
-              _genero = '';
-              _telefonoController.clear();
-              _correoController.clear();
-              _entidadController.clear();
-              identificaCount = 0;
-              _nombresfieldiCount = 0;
-              _apellidosFieldiCount = 0;
-              _telefonofieldiCount = 0;
-              _correofieldiCount = 0;
-              setState(() {});
-            },
-            icon: const Icon(
-              Icons.new_label_rounded,
-              color: Colors.white,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              onPressed: guardaPaciente,
-              icon: !guardando
-                  ? const Icon(
-                      Icons.save,
-                      color: Colors.lightGreenAccent,
-                    )
-                  : const SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(18.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              TextFieldi(
+      ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionCard(
+              title: 'Identificación',
+              icon: Icons.badge_rounded,
+              child: TextFieldi(
                 autoFocus: true,
                 focusNode: focusNode,
                 controller: _identificacionController,
                 count: 6,
-                color: Colors.green,
+                color: scheme.primary,
                 hintText: 'Ingrese la Identificación del paciente',
                 field: 'Identificación',
                 keyboardType: const TextInputType.numberWithOptions(),
@@ -239,144 +220,217 @@ class _PacientesState extends State<Pacientes> {
                 },
                 digitsOnly: true,
               ),
-              const SizedBox(
-                height: 18.0,
-              ),
-              TextFieldi(
-                fieldiCount: _nombresfieldiCount,
-                focusNode: focusNodeNombres,
-                controller: _nombresController,
-                hintText: 'Nombres del paciente',
-                count: 3,
-                field: 'Nombres',
-                textCapitalization: TextCapitalization.characters,
-                color: Colors.green,
-                keyboardType: TextInputType.text,
-                onChanged: (value) {
-                  nombresValido = value.length >= 3;
-                },
-                digitsOnly: false,
-              ),
-              const SizedBox(
-                height: 18.0,
-              ),
-              TextFieldi(
-                fieldiCount: _apellidosFieldiCount,
-                controller: _apellidosController,
-                hintText: 'Apellidos del paciente',
-                field: 'Apellidos',
-                textCapitalization: TextCapitalization.characters,
-                count: 5,
-                color: Colors.green,
-                focusNode: FocusNode(),
-                keyboardType: TextInputType.text,
-                onChanged: (value) {
-                  apellidosValido = value.length >= 5;
-                },
-                digitsOnly: false,
-              ),
-              const SizedBox(
-                height: 18.0,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(0),
-                child: buildDatePicker(
-                  context,
-                  _fecnacController,
-                  'Fecha de Nacimiento',
-                ),
-              ),
-              const SizedBox(
-                height: 18.0,
-              ),
-              SizedBox(
-                width: MediaQuery.of(context).size.width,
-                child: DropdownButton(
-                  items: _itemsGenero,
-                  value: _genero,
-                  onChanged: (value) {
-                    setState(() {
-                      _genero = value!;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 18.0),
-              TextFieldi(
-                fieldiCount: _telefonofieldiCount,
-                hintText: 'telefono del paciente',
-                field: 'Teléfono',
-                controller: _telefonoController,
-                keyboardType: TextInputType.phone,
-                color: Colors.green,
-                count: 10,
-                focusNode: FocusNode(),
-                textCapitalization: TextCapitalization.none,
-                onChanged: (value) {
-                  telefonoValido = value.length >= 10;
-                },
-                digitsOnly: true,
-              ),
-              const SizedBox(height: 18.0),
-              TextFieldi(
-                fieldiCount: _correofieldiCount,
-                controller: _correoController,
-                hintText: 'Correo del paciente',
-                field: 'Correo',
-                keyboardType: TextInputType.emailAddress,
-                color: Colors.green,
-                count: 8,
-                digitsOnly: false,
-                focusNode: FocusNode(),
-                onChanged: (value) {},
-                textCapitalization: TextCapitalization.none,
-                isCorreo: true,
-                correoValido: validarCorreo(),
-              ),
-              const SizedBox(height: 18),
-              TextFieldi(
-                controller: _entidadController,
-                hintText: 'Entidad del paciente',
-                field: 'Entidad',
-                keyboardType: TextInputType.text,
-                color: Colors.green,
-                digitsOnly: false,
-                count: 0,
-                focusNode: FocusNode(),
-                textCapitalization: TextCapitalization.characters,
-                onChanged: (value) {},
-              ),
-              const SizedBox(
-                height: 36.0,
-              ),
-              SizedBox(
-                width: 0.65 * MediaQuery.of(context).size.width,
-                child: ElevatedButton(
-                  onPressed: guardaPaciente,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final bool wide = constraints.maxWidth >= 900;
+                final Widget datos = _cardDatosPersonales(scheme);
+                final Widget contacto = _cardContacto(scheme);
+                if (wide) {
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Guardar",
-                      ),
-                      !guardando
-                          ? const Icon(Icons.save)
-                          : const SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
-                            ),
+                      Expanded(child: datos),
+                      const SizedBox(width: 14),
+                      Expanded(child: contacto),
                     ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+                  );
+                }
+                return Column(
+                  children: [datos, const SizedBox(height: 14), contacto],
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: guardando ? null : _confirmarGuardar,
+              icon: guardando
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.save_rounded),
+              label: Text(guardando ? 'Guardando...' : 'Guardar Paciente'),
+            ),
+            const SizedBox(height: 24),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _cardDatosPersonales(ColorScheme scheme) {
+    return SectionCard(
+      title: 'Datos personales',
+      icon: Icons.person_rounded,
+      child: Column(
+        children: [
+          TextFieldi(
+            fieldiCount: _nombresfieldiCount,
+            focusNode: focusNodeNombres,
+            controller: _nombresController,
+            hintText: 'Nombres del paciente',
+            count: 3,
+            field: 'Nombres',
+            textCapitalization: TextCapitalization.characters,
+            color: scheme.primary,
+            keyboardType: TextInputType.text,
+            onChanged: (value) {
+              nombresValido = value.length >= 3;
+            },
+            digitsOnly: false,
+          ),
+          const SizedBox(height: 14),
+          TextFieldi(
+            fieldiCount: _apellidosFieldiCount,
+            controller: _apellidosController,
+            hintText: 'Apellidos del paciente',
+            field: 'Apellidos',
+            textCapitalization: TextCapitalization.characters,
+            count: 5,
+            color: scheme.primary,
+            focusNode: FocusNode(),
+            keyboardType: TextInputType.text,
+            onChanged: (value) {
+              apellidosValido = value.length >= 5;
+            },
+            digitsOnly: false,
+          ),
+          const SizedBox(height: 14),
+          buildDatePicker(
+            context,
+            _fecnacController,
+            'Fecha de Nacimiento',
+          ),
+          const SizedBox(height: 14),
+          InputDecorator(
+            decoration: const InputDecoration(
+              labelText: 'Género',
+              prefixIcon: Icon(Icons.wc_rounded),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                isExpanded: true,
+                items: _itemsGenero.cast<DropdownMenuItem<String>>(),
+                value: _genero,
+                onChanged: (value) {
+                  setState(() {
+                    _genero = value!;
+                  });
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cardContacto(ColorScheme scheme) {
+    return SectionCard(
+      title: 'Contacto',
+      icon: Icons.contact_phone_rounded,
+      child: Column(
+        children: [
+          TextFieldi(
+            fieldiCount: _telefonofieldiCount,
+            hintText: 'Teléfono del paciente',
+            field: 'Teléfono',
+            controller: _telefonoController,
+            keyboardType: TextInputType.phone,
+            color: scheme.primary,
+            count: 10,
+            focusNode: FocusNode(),
+            textCapitalization: TextCapitalization.none,
+            onChanged: (value) {
+              telefonoValido = value.length >= 10;
+            },
+            digitsOnly: true,
+          ),
+          const SizedBox(height: 14),
+          TextFieldi(
+            fieldiCount: _correofieldiCount,
+            controller: _correoController,
+            hintText: 'Correo del paciente',
+            field: 'Correo',
+            keyboardType: TextInputType.emailAddress,
+            color: scheme.primary,
+            count: 8,
+            digitsOnly: false,
+            focusNode: FocusNode(),
+            onChanged: (value) {},
+            textCapitalization: TextCapitalization.none,
+            isCorreo: true,
+            correoValido: validarCorreo(),
+          ),
+          const SizedBox(height: 14),
+          TextFieldi(
+            controller: _entidadController,
+            hintText: 'Entidad del paciente',
+            field: 'Entidad',
+            keyboardType: TextInputType.text,
+            color: scheme.primary,
+            digitsOnly: false,
+            count: 0,
+            focusNode: FocusNode(),
+            textCapitalization: TextCapitalization.characters,
+            onChanged: (value) {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmarGuardar() async {
+    if (!identificacionValida) {
+      infoValido('Ingrese el número de identificacion correcto');
+      return;
+    } else if (!nombresValido) {
+      infoValido('Ingrese un nombre válido');
+      return;
+    } else if (!apellidosValido) {
+      infoValido('Ingrese apellidos más relevantes');
+      return;
+    } else if (!validarFecha()) {
+      infoValido('Ingrese una fecha de Nacimiento correcta');
+      return;
+    } else if (_genero.isEmpty) {
+      infoValido('Seleccione el género');
+      return;
+    } else if (!telefonoValido) {
+      infoValido('Se necesita un numero de telefono correcto');
+      return;
+    } else if (!validarCorreo()) {
+      infoValido('Ingrese un correo correcto');
+      return;
+    }
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Icons.save_rounded,
+          size: 30,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        title: Text(id == '' ? 'Registrar paciente' : 'Actualizar paciente'),
+        content: Text(id == ''
+            ? '¿Desea registrar al paciente ${_nombresController.text} ${_apellidosController.text}?'
+            : '¿Desea guardar los cambios del paciente?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) guardaPaciente();
   }
 
   void guardaPaciente() async {
@@ -417,7 +471,7 @@ class _PacientesState extends State<Pacientes> {
       showToastB(
           fToast, 'Ha ocurido un error. Intentelo nuevamente más tarde.');
     }
-    setState(() => guardando = !guardando);
+    if (mounted) setState(() => guardando = !guardando);
   }
 
   void infoValido(String text) {

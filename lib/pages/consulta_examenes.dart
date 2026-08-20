@@ -9,6 +9,11 @@ import 'package:movavid/models/examen-model.dart';
 import 'package:movavid/models/examenes.dart';
 import 'package:movavid/models/paciente.dart';
 import 'package:movavid/pages/loading.dart';
+import 'package:movavid/widgets/app_page.dart';
+import 'package:movavid/widgets/empty_state.dart';
+import 'package:movavid/widgets/hover_card.dart';
+import 'package:movavid/widgets/loading_overlay.dart';
+import 'package:movavid/widgets/status_pill.dart';
 
 class ConsultaExamenes extends StatefulWidget {
   final Paciente paciente;
@@ -60,15 +65,13 @@ class _ConsultaExamenesState extends State<ConsultaExamenes> {
   List<String> listaFechas = [];
   FToast fToast = FToast();
   String fechae = '';
-  late final List<DropdownMenuItem> _fechas;
   bool mirando = false;
+  bool _error = false;
   @override
   void initState() {
     super.initState();
     keyL = GlobalKey<State<StatefulWidget>>();
     fToast.init(context);
-    //  pacientes = await getPacientes(context) as List<Paciente>;
-    setState(() => mirando = !mirando);
     try {
       if (widget.fecha == '') {
         examenesPaciente(context, fToast,
@@ -84,46 +87,16 @@ class _ConsultaExamenesState extends State<ConsultaExamenes> {
                       : element.fecha != '')
                   .toList();
             }
+            _error = false;
             setState(() {});
-            setState(() => mirando = !mirando);
             Set<String> listafechas =
                 Set.from(examenes.map((Examenes examen) => examen.fecha));
-            print(listafechas);
-            listaFechas.addAll(listafechas);
-            listaFechas =
-                ['Fecha del o de los examenes', 'Todos'] + listaFechas;
-            int idx = 0;
-            _fechas = listaFechas.map((e) {
-              idx++;
-              return DropdownMenuItem(
-                value: e.contains('Fecha') ? '' : e,
-                enabled: e != '',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      e,
-                      style: TextStyle(
-                        color: e.contains('Fecha') || e.contains('Todos')
-                            ? Colors.grey
-                            : idx % 2 == 0
-                                ? Colors.green
-                                : Colors.amber,
-                      ),
-                    ),
-                    Text(
-                      e.contains('-') ? formatDate(e) : '',
-                      style: const TextStyle(
-                          fontSize: 10, fontStyle: FontStyle.italic),
-                    ),
-                  ],
-                ),
-              );
-            }).toList();
+            listaFechas = ['Todos'] + listafechas.toList();
+            if (mounted) setState(() {});
           } else {
+            _error = true;
             showToastB(fToast, 'Error en el sevidor');
           }
-          setState(() {});
         });
       } else if (widget.fecha.contains('-')) {
         examenesPacienteFecha(context, fToast,
@@ -140,49 +113,20 @@ class _ConsultaExamenesState extends State<ConsultaExamenes> {
                       : element.fecha != '')
                   .toList();
             }
+            _error = false;
             setState(() {});
-            setState(() => mirando = !mirando);
             Set<String> listafechas =
                 Set.from(examenes.map((Examenes examen) => examen.fecha));
-            print(listafechas);
-            listaFechas.addAll(listafechas);
-            listaFechas =
-                ['Fecha del o de los examenes', 'Todos'] + listaFechas;
-            int idx = 0;
-            _fechas = listaFechas.map((e) {
-              idx++;
-              return DropdownMenuItem(
-                value: e.contains('Fecha') ? '' : e,
-                enabled: e != '',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      e,
-                      style: TextStyle(
-                        color: e.contains('Fecha') || e.contains('Todos')
-                            ? Colors.grey
-                            : idx % 2 == 0
-                                ? Colors.green
-                                : Colors.amber,
-                      ),
-                    ),
-                    Text(
-                      e.contains('-') ? formatDate(e) : '',
-                      style: const TextStyle(
-                          fontSize: 10, fontStyle: FontStyle.italic),
-                    ),
-                  ],
-                ),
-              );
-            }).toList();
+            listaFechas = ['Todos'] + listafechas.toList();
+            if (mounted) setState(() {});
           } else {
+            _error = true;
             showToastB(fToast, 'Error en el sevidor');
           }
-          setState(() {});
         });
       }
     } catch (e) {
+      _error = true;
       showToastB(fToast, 'Error de Conexión a internet');
     }
   }
@@ -211,195 +155,254 @@ class _ConsultaExamenesState extends State<ConsultaExamenes> {
     return result;
   }
 
-  Future<void> espera() async {
-    // Simulate an asynchronous data fetch (e.g., network request)
-    await Future.delayed(const Duration(seconds: 1));
-    print('Listo!');
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.paciente.nombreCompleto,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    return AppPage(
+      title: 'Exámenes del paciente',
+      titleWidget: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.paciente.nombreCompleto,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
             ),
-            Text(
-              '${widget.paciente.identificacion!} ${widget.paciente.genero}',
-              style: const TextStyle(fontSize: 10),
-            ),
-            Text(
-              widget.paciente.edad,
-              style: const TextStyle(fontSize: 10),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context, 'home');
-              },
-              icon: const Icon(Icons.home),
+          ),
+          Text(
+            '${widget.paciente.identificacion!} • ${widget.paciente.genero} • ${widget.paciente.edad}',
+            style: TextStyle(
+              fontSize: 11,
+              color: scheme.onSurfaceVariant,
             ),
           ),
         ],
       ),
-      body: examenes.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                ListView.builder(
-                  itemCount: examenesFilter.length + 1,
-                  itemBuilder: (context, index) {
-                    late String examen;
-                    late String codexamen;
-                    late String fecha;
-                    late String tipo;
-                    late bool realizado;
-                    int indexx = index - 1;
-                    if (index == 0) {
-                      return SizedBox(
-                        width: MediaQuery.of(context).size.width,
-                        child: Padding(
-                          padding: const EdgeInsets.all(
-                            18.0,
-                          ),
-                          child: DropdownButton(
-                            value: fechae,
-                            items: _fechas,
-                            onChanged: (value) {
-                              fechae = value;
-                              examenesFilter = examenes
-                                  .where((element) => value.contains('-')
-                                      ? element.fecha == fechae
-                                      : element.fecha != '')
-                                  .toList();
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      );
-                    } else {
-                      examen = examenesFilter[indexx].examen!;
-                      codexamen = examenesFilter[indexx].codexamen!;
-                      fecha = examenesFilter[indexx].fecha!;
-                      tipo = examenesFilter[indexx].tipo!;
-                      realizado = examenesFilter[indexx].realizado! == 'S';
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8.0, right: 8),
-                      child: Card(
-                        child: ListTile(
-                          leading: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 25, // Ajusta el tamaño del avatar
-                                backgroundImage: AssetImage(imageLab(examen)),
-                              ),
-                              realizado
-                                  ? SizedBox(
-                                      width: 25,
-                                      height: 25,
-                                      child: Image.asset('images/check.png',
-                                          scale: 0.5),
-                                    )
-                                  : const SizedBox(),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            onPressed: () async {
-                              mirando = true;
-                              setState(() {});
-                              //   await espera();
-                              await viewExam(
-                                  // ignore: use_build_context_synchronously
-                                  context,
-                                  widget.paciente,
-                                  codexamen,
-                                  fecha,
-                                  tipo,
-                                  codexamen,
-                                  examen,
-                                  keyL);
-                              mirando = false;
-                              setState(() {});
-                            },
-                            icon: const Icon(
-                              Icons.remove_red_eye,
-                              color: Colors.blue,
-                            ),
-                          ),
-                          title: Text(
-                            examen,
-                            style: const TextStyle(
-                              color: Colors.blueGrey,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    fecha,
-                                    style: const TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+      actions: [
+        IconButton(
+          onPressed: () {
+            Navigator.pop(context, 'home');
+          },
+          tooltip: 'Inicio',
+          icon: const Icon(Icons.home_rounded),
+        ),
+      ],
+      body: LoadingOverlay(
+        visible: mirando,
+        message: 'Cargando examen...',
+        child: examenes.isEmpty && !_error
+            ? const Center(child: CircularProgressIndicator())
+            : examenes.isEmpty && _error
+                ? const EmptyState(
+                    icon: Icons.cloud_off_rounded,
+                    title: 'No se pudieron cargar los exámenes',
+                    subtitle:
+                        'Compruebe su conexión a internet e intente de nuevo.',
+                  )
+                : Column(
+                      children: [
+                        if (listaFechas.length > 1)
+                          SizedBox(
+                            height: 56,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: listaFechas.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 8),
+                              itemBuilder: (context, index) {
+                                final String fechaItem = listaFechas[index];
+                                final bool isAll = fechaItem == 'Todos';
+                                final bool selected = isAll
+                                    ? fechae == ''
+                                    : fechae == fechaItem;
+                                return Center(
+                                  child: ChoiceChip(
+                                    label: Text(isAll
+                                        ? 'Todos'
+                                        : formatDate(fechaItem)),
+                                    selected: selected,
+                                    showCheckmark: false,
+                                    onSelected: (_) {
+                                      fechae = isAll ? '' : fechaItem;
+                                      examenesFilter = examenes
+                                          .where((element) =>
+                                              fechae == '' ||
+                                              (element.fecha!.contains('-')
+                                                  ? element.fecha == fechae
+                                                  : element.fecha != ''))
+                                          .toList();
+                                      setState(() {});
+                                    },
                                   ),
-                                  const SizedBox(
-                                    width: 5,
-                                  ),
-                                  Text(
-                                    '$tipo - $codexamen',
-                                    style: const TextStyle(
-                                      fontSize: 7,
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                mirando
-                    ? Center(
-                        child: Opacity(
-                          opacity: 0.4,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.blueGrey,
-                              border: Border.all(
-                                color: Colors.grey,
-                                width: 1.0,
-                              ),
-                            ),
-                            child: const Padding(
-                              padding: EdgeInsets.all(168.0),
-                              child: CircularProgressIndicator(),
+                                );
+                              },
                             ),
                           ),
+                        Expanded(
+                          child: examenesFilter.isEmpty
+                              ? const EmptyState(
+                                  icon: Icons.search_off_rounded,
+                                  title: 'Sin exámenes en esta fecha',
+                                )
+                              : ListView.separated(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: examenesFilter.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 10),
+                                  itemBuilder: (context, index) {
+                                    final Examenes item =
+                                        examenesFilter[index];
+                                    final String examen = item.examen!;
+                                    final String codexamen = item.codexamen!;
+                                    final String fecha = item.fecha!;
+                                    final String tipo = item.tipo!;
+                                    final bool realizado =
+                                        item.realizado! == 'S';
+                                    return HoverCard(
+                                      onTap: () async {
+                                        await _abrirExamen(item);
+                                      },
+                                      padding: const EdgeInsets.all(12),
+                                      child: Row(
+                                        children: [
+                                          Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 26,
+                                                backgroundImage: AssetImage(
+                                                    imageLab(examen)),
+                                              ),
+                                              if (realizado)
+                                                Positioned(
+                                                  right: -4,
+                                                  bottom: -4,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(2),
+                                                    decoration: BoxDecoration(
+                                                      color: scheme
+                                                          .primaryContainer,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.check_rounded,
+                                                      size: 14,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  examen,
+                                                  style: TextStyle(
+                                                    color: scheme.onSurface,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons
+                                                          .calendar_month_rounded,
+                                                      size: 13,
+                                                      color: scheme
+                                                          .onSurfaceVariant,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      fecha,
+                                                      style: TextStyle(
+                                                        color: scheme
+                                                            .onSurfaceVariant,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Wrap(
+                                                  spacing: 6,
+                                                  runSpacing: 4,
+                                                  crossAxisAlignment:
+                                                      WrapCrossAlignment.center,
+                                                  children: [
+                                                    StatusPill(
+                                                      label: realizado
+                                                          ? 'Realizado'
+                                                          : 'Pendiente',
+                                                      icon: realizado
+                                                          ? Icons
+                                                              .check_circle_rounded
+                                                          : Icons
+                                                              .schedule_rounded,
+                                                      color: realizado
+                                                          ? Colors.green
+                                                          : Colors.orange,
+                                                    ),
+                                                    Text(
+                                                      '$tipo - $codexamen',
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: scheme
+                                                            .onSurfaceVariant,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          IconButton.filledTonal(
+                                            onPressed: () async {
+                                              await _abrirExamen(item);
+                                            },
+                                            tooltip: 'Ver examen',
+                                            icon: Icon(
+                                              Icons.visibility_rounded,
+                                              color: scheme.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
                         ),
-                      )
-                    : const SizedBox(),
-              ],
-            ),
+                      ],
+                    ),
+        ),
     );
+  }
+
+  Future<void> _abrirExamen(Examenes item) async {
+    mirando = true;
+    setState(() {});
+    await viewExam(
+      context,
+      widget.paciente,
+      item.codexamen!,
+      item.fecha!,
+      item.tipo!,
+      item.codexamen!,
+      item.examen!,
+      keyL,
+    );
+    mirando = false;
+    if (mounted) setState(() {});
   }
 
   Future<void> viewExam(

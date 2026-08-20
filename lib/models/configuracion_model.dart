@@ -39,18 +39,25 @@ class ConfiguracionModel {
 
   factory ConfiguracionModel.fromJson(Map<String, dynamic> json) =>
       ConfiguracionModel(
-        id: json["id"].toString(),
-        nit: json["nit"].toString(),
-        nombreLaboratorio: json["nombreLaboratorio"].toString(),
-        direccionLaboratorio: json["direccionLaboratorio"].toString(),
-        telefonosLaboratorio: json["telefonosLaboratorio"].toString(),
-        correoLaboratorio: json["correoLaboratorio"].toString(),
-        webLaboratorio: json["webLaboratorio"].toString(),
-        bacteriologoLaboratorio: json["bacteriologoLaboratorio"].toString(),
-        tarjetaPLaboratorio: json["tarjetaPLaboratorio"].toString(),
-        urlFirmaLaboratorio: json["urFirmaLaboratorio"].toString(),
-        urlLogoLaboratorio: json["urlLogoLaboratorio"].toString(),
+        id: _string(json["id"]),
+        nit: _string(json["nit"]),
+        nombreLaboratorio: _string(json["nombreLaboratorio"]),
+        direccionLaboratorio: _string(json["direccionLaboratorio"]),
+        telefonosLaboratorio: _string(json["telefonosLaboratorio"]),
+        correoLaboratorio: _string(json["correoLaboratorio"]),
+        webLaboratorio: _string(json["webLaboratorio"]),
+        bacteriologoLaboratorio: _string(json["bacteriologoLaboratorio"]),
+        tarjetaPLaboratorio: _string(json["tarjetaPLaboratorio"]),
+        urlFirmaLaboratorio: _string(
+            json["urlFirmaLaboratorio"] ?? json["urFirmaLaboratorio"]),
+        urlLogoLaboratorio: _string(json["urlLogoLaboratorio"]),
       );
+
+  static String? _string(dynamic value) {
+    if (value == null) return null;
+    final String s = value.toString();
+    return s == 'null' || s.isEmpty ? null : s;
+  }
 
   Map<String, dynamic> toJson() => {
         "id": id,
